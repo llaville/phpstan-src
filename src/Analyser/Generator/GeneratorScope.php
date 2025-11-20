@@ -914,7 +914,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 		return false;
 	}
 
-	private function filterTypeWithMethod(Type $typeWithMethod, string $methodName): ?Type
+	public function filterTypeWithMethod(Type $typeWithMethod, string $methodName): ?Type
 	{
 		if ($typeWithMethod instanceof UnionType) {
 			$typeWithMethod = $typeWithMethod->filterTypes(static fn (Type $innerType) => $innerType->hasMethod($methodName)->yes());

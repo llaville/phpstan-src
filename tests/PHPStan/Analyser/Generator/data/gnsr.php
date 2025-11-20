@@ -2,13 +2,14 @@
 
 namespace GeneratorNodeScopeResolverTest;
 
+use Closure;
 use function PHPStan\Testing\assertNativeType;
 use function PHPStan\Testing\assertType;
 
 class Foo
 {
 
-	public function doFoo(): ?string
+	public function doFoo(int $i): ?string
 	{
 		return 'foo';
 	}
@@ -39,7 +40,7 @@ class Foo
 function (): void {
 	$foo = new Foo();
 	assertType(Foo::class, $foo);
-	assertType('string|null', $foo->doFoo());
+	assertType('string|null', $foo->doFoo(1));
 	assertType($a = '1', (int) $a);
 };
 
@@ -108,4 +109,65 @@ function (): void {
 		$a = 1;
 	};
 	assertType('0|1', $a);
+};
+
+class FooWithStaticMethods
+{
+
+	public function doFoo(): void
+	{
+		assertType('GeneratorNodeScopeResolverTest\\FooWithStaticMethods', self::returnSelf());
+		assertNativeType('GeneratorNodeScopeResolverTest\\FooWithStaticMethods', self::returnSelf());
+		assertType('GeneratorNodeScopeResolverTest\\FooWithStaticMethods', self::returnPhpDocSelf());
+		assertNativeType('mixed', self::returnPhpDocSelf());
+	}
+
+	public static function returnSelf(): self
+	{
+
+	}
+
+	/**
+	 * @return self
+	 */
+	public static function returnPhpDocSelf()
+	{
+
+	}
+
+}
+
+class ClosureFromCallableExtension
+{
+
+	/**
+	 * @param callable(string, int=): bool $cb
+	 */
+	public function doFoo(callable $cb): void
+	{
+		assertType('callable(string, int=): bool', $cb);
+		assertType('Closure(string, int=): bool', Closure::fromCallable($cb));
+	}
+
+}
+
+/**
+ * @template T
+ */
+class FooGeneric
+{
+
+	/**
+	 * @param T $a
+	 */
+	public function __construct($a)
+	{
+
+	}
+
+}
+
+function (): void {
+	//$foo = new FooGeneric(5);
+	//assertType('GeneratorNodeScopeResolverTest\\FooGeneric<int>', $foo);
 };
