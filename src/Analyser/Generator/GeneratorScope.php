@@ -144,7 +144,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	 * @param int|array{min: int, max: int}|null $configPhpVersion
 	 * @param array<string, ExpressionTypeHolder> $expressionTypes
 	 * @param array<string, ConditionalExpressionHolder[]> $conditionalExpressions
-	 * @param list<string> $inClosureBindScopeClasses
+	 * @param list<non-empty-string> $inClosureBindScopeClasses
 	 * @param array<string, true> $currentlyAssignedExpressions
 	 * @param array<string, true> $currentlyAllowedUndefinedExpressions
 	 * @param array<string, ExpressionTypeHolder> $nativeExpressionTypes
@@ -2477,7 +2477,10 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 		throw new ShouldNotHappenException('Not implemented yet');
 	}
 
-	/** @api */
+	/**
+	 * @api
+	 * @return non-empty-string
+	 */
 	public function resolveName(Name $name): string
 	{
 		$originalClass = (string) $name;

@@ -1690,24 +1690,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			);
 		} elseif ($node instanceof New_) {
 			if ($node->class instanceof Name) {
-				$type = $this->exactInstantiation($node, $node->class);
-				if ($type !== null) {
-					return $type;
-				}
-
-				$lowercasedClassName = strtolower($node->class->toString());
-				if ($lowercasedClassName === 'static') {
-					if (!$this->isInClass()) {
-						return new ErrorType();
-					}
-
-					return new StaticType($this->getClassReflection());
-				}
-				if ($lowercasedClassName === 'parent') {
-					return new NonexistentParentClassType();
-				}
-
-				return new ObjectType($node->class->toString());
+				return $this->exactInstantiation($node, $node->class);
 			}
 			if ($node->class instanceof Node\Stmt\Class_) {
 				$anonymousClassReflection = $this->reflectionProvider->getAnonymousClassReflection($node->class, $this);
@@ -5790,16 +5773,28 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		return $descriptions;
 	}
 
-	private function exactInstantiation(New_ $node, Name $className): ?Type
+	private function exactInstantiation(New_ $node, Name $className): Type
 	{
 		$resolvedClassName = $this->resolveName($className);
 		$isStatic = false;
-		if ($className->toLowerString() === 'static') {
+		$lowercasedClassName = $className->toLowerString();
+		if ($lowercasedClassName === 'static') {
 			$isStatic = true;
 		}
 
 		if (!$this->reflectionProvider->hasClass($resolvedClassName)) {
-			return null;
+			if ($lowercasedClassName === 'static') {
+				if (!$this->isInClass()) {
+					return new ErrorType();
+				}
+
+				return new StaticType($this->getClassReflection());
+			}
+			if ($lowercasedClassName === 'parent') {
+				return new NonexistentParentClassType();
+			}
+
+			return new ObjectType($resolvedClassName);
 		}
 
 		$classReflection = $this->reflectionProvider->getClass($resolvedClassName);

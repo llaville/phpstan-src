@@ -413,7 +413,7 @@ final class GeneratorNodeScopeResolver
 			);
 		}
 
-		return $fiber->getReturn();
+		return new RunInFiberResult($fiber->getReturn());
 	}
 
 	/**
