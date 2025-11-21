@@ -204,7 +204,7 @@ final class GeneratorNodeScopeResolver
 				} elseif ($yielded instanceof ExprAnalysisRequest) {
 					$stack[] = $gen;
 					$gen = new IdentifiedGeneratorInStack(
-						$this->analyseExpr($exprAnalysisResultStorage, $yielded->stmt, $yielded->expr, $yielded->scope, $yielded->context, $yielded->alternativeNodeCallback, $stack, $yielded->originFile, $yielded->originLine),
+						$this->analyseExpr($fibersStorage, $exprAnalysisResultStorage, $yielded->stmt, $yielded->expr, $yielded->scope, $yielded->context, $yielded->alternativeNodeCallback, $stack, $yielded->originFile, $yielded->originLine),
 						$yielded->expr,
 						$yielded->originFile,
 						$yielded->originLine,
@@ -292,7 +292,7 @@ final class GeneratorNodeScopeResolver
 
 					$stack[] = $gen;
 					$gen = new IdentifiedGeneratorInStack(
-						$this->analyseExpr($exprAnalysisResultStorage, $request->stmt, $request->expr, $request->scope, $request->context, $request->alternativeNodeCallback, $stack, $request->originFile, $request->originLine),
+						$this->analyseExpr(null, $exprAnalysisResultStorage, $request->stmt, $request->expr, $request->scope, $request->context, $request->alternativeNodeCallback, $stack, $request->originFile, $request->originLine),
 						$request->expr,
 						$request->originFile,
 						$request->originLine,
@@ -421,7 +421,7 @@ final class GeneratorNodeScopeResolver
 	 * @param list<IdentifiedGeneratorInStack> $stack
 	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, ExprAnalysisResult>
 	 */
-	private function analyseExpr(ExprAnalysisResultStorage $storage, Stmt $stmt, Expr $expr, GeneratorScope $scope, ExpressionContext $context, ?callable $alternativeNodeCallback, array $stack, ?string $file, ?int $line): Generator
+	private function analyseExpr(?PendingFibersStorage $fibersStorage, ExprAnalysisResultStorage $storage, Stmt $stmt, Expr $expr, GeneratorScope $scope, ExpressionContext $context, ?callable $alternativeNodeCallback, array $stack, ?string $file, ?int $line): Generator
 	{
 		$foundExprAnalysisResult = $storage->findExprAnalysisResult($expr);
 		if ($foundExprAnalysisResult !== null) {
@@ -459,7 +459,7 @@ final class GeneratorNodeScopeResolver
 				throw new ShouldNotHappenException();
 			}
 
-			$exprGen = $this->analyseExpr($storage, $stmt, $newExpr, $scope, $context, $alternativeNodeCallback, $stack, $file, $line);
+			$exprGen = $this->analyseExpr($fibersStorage, $storage, $stmt, $newExpr, $scope, $context, $alternativeNodeCallback, $stack, $file, $line);
 			yield from $exprGen;
 
 			return $exprGen->getReturn();
@@ -480,6 +480,10 @@ final class GeneratorNodeScopeResolver
 
 			$exprAnalysisResult = $gen->getReturn();
 			$storage->storeExprAnalysisResult($expr, $exprAnalysisResult, $stack, $file, $line);
+
+			if ($fibersStorage !== null) {
+				yield from $this->processPendingFibersForRequestedExpr($fibersStorage, $storage, $expr, $exprAnalysisResult);
+			}
 
 			return $exprAnalysisResult;
 		}
@@ -590,6 +594,35 @@ final class GeneratorNodeScopeResolver
 
 				$fiber = $pending['fiber'];
 				$request = $fiber->resume($exprAnalysisResult);
+				yield from $this->runFiberForNodeCallback($fibersStorage, $exprAnalysisResultStorage, $fiber, $request);
+
+				// Break and restart the loop since the array may have been modified
+				break;
+			}
+		}
+	}
+
+	/**
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, void>
+	 */
+	private function processPendingFibersForRequestedExpr(PendingFibersStorage $fibersStorage, ExprAnalysisResultStorage $exprAnalysisResultStorage, Expr $expr, ExprAnalysisResult $result): Generator
+	{
+		$restartLoop = true;
+
+		while ($restartLoop) {
+			$restartLoop = false;
+
+			foreach ($fibersStorage->pendingFibers as $key => $pending) {
+				$request = $pending['request'];
+				if ($request->expr !== $expr) {
+					continue;
+				}
+
+				unset($fibersStorage->pendingFibers[$key]);
+				$restartLoop = true;
+
+				$fiber = $pending['fiber'];
+				$request = $fiber->resume($result);
 				yield from $this->runFiberForNodeCallback($fibersStorage, $exprAnalysisResultStorage, $fiber, $request);
 
 				// Break and restart the loop since the array may have been modified
