@@ -1690,7 +1690,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			);
 		} elseif ($node instanceof New_) {
 			if ($node->class instanceof Name) {
-				$type = $this->exactInstantiation($node, $node->class->toString());
+				$type = $this->exactInstantiation($node, $node->class);
 				if ($type !== null) {
 					return $type;
 				}
@@ -2776,30 +2776,6 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		}
 
 		return $offsetAccessibleType->getOffsetValueType($offsetType);
-	}
-
-	private function resolveExactName(string $name): ?string
-	{
-		switch (strtolower($name)) {
-			case 'self':
-				if (!$this->isInClass()) {
-					return null;
-				}
-				return $this->getClassReflection()->getName();
-			case 'parent':
-				if (!$this->isInClass()) {
-					return null;
-				}
-				$currentClassReflection = $this->getClassReflection();
-				if ($currentClassReflection->getParentClass() !== null) {
-					return $currentClassReflection->getParentClass()->getName();
-				}
-				return null;
-			case 'static':
-				return null;
-		}
-
-		return $name;
 	}
 
 	/** @api */
@@ -5814,22 +5790,11 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		return $descriptions;
 	}
 
-	/**
-	 * @param non-empty-string $className
-	 */
-	private function exactInstantiation(New_ $node, string $className): ?Type
+	private function exactInstantiation(New_ $node, Name $className): ?Type
 	{
-		$resolvedClassName = $this->resolveExactName($className);
+		$resolvedClassName = $this->resolveName($className);
 		$isStatic = false;
-		if ($resolvedClassName === null) {
-			if (strtolower($className) !== 'static') {
-				return null;
-			}
-
-			if (!$this->isInClass()) {
-				return null;
-			}
-			$resolvedClassName = $this->getClassReflection()->getName();
+		if ($className->toLowerString() === 'static') {
 			$isStatic = true;
 		}
 
