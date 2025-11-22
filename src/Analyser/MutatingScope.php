@@ -6038,13 +6038,6 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			);
 		}
 
-		$parametersAcceptor = ParametersAcceptorSelector::selectFromArgs(
-			$this,
-			$methodCall->getArgs(),
-			$constructorMethod->getVariants(),
-			$constructorMethod->getNamedArgumentsVariants(),
-		);
-
 		$resolvedTemplateTypeMap = $parametersAcceptor->getResolvedTemplateTypeMap();
 		$types = $classReflection->typeMapToList($classReflection->getTemplateTypeMap());
 		$newGenericType = new GenericObjectType(
