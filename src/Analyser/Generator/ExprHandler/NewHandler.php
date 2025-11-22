@@ -173,6 +173,7 @@ final class NewHandler implements ExprHandler
 
 		if ($constructorReflection !== null) {
 			$storage = yield new PersistStorageRequest();
+			yield new RestoreStorageRequest($storage);
 			$parametersAcceptor = (yield new RunInFiberRequest(static fn () => ParametersAcceptorSelector::selectFromArgs(
 				$scope,
 				$expr->getArgs(),
@@ -230,6 +231,7 @@ final class NewHandler implements ExprHandler
 		if ($classReflection->hasConstructor()) {
 			$constructorReflection = $classReflection->getConstructor();
 			$storage = yield new PersistStorageRequest();
+			yield new RestoreStorageRequest($storage);
 			$parametersAcceptor = (yield new RunInFiberRequest(static fn () => ParametersAcceptorSelector::selectFromArgs(
 				$scope,
 				$expr->getArgs(),
@@ -397,6 +399,7 @@ final class NewHandler implements ExprHandler
 		);
 
 		$storage = yield new PersistStorageRequest();
+		yield new RestoreStorageRequest($storage);
 		$parametersAcceptor = (yield new RunInFiberRequest(static fn () => ParametersAcceptorSelector::selectFromArgs(
 			$scope,
 			$methodCall->getArgs(),
@@ -424,8 +427,6 @@ final class NewHandler implements ExprHandler
 			}
 		}
 
-		yield new RestoreStorageRequest($storage);
-
 		if (count($resolvedTypes) > 0) {
 			return TypeCombinator::union(...$resolvedTypes);
 		}
@@ -434,6 +435,8 @@ final class NewHandler implements ExprHandler
 		if ($methodResult instanceof NeverType && $methodResult->isExplicit()) {
 			return $methodResult;
 		}
+
+		yield new RestoreStorageRequest($storage);
 
 		$objectType = $isStatic ? new StaticType($classReflection) : new ObjectType($resolvedClassName, classReflection: $classReflection);
 		if (!$classReflection->isGeneric()) {

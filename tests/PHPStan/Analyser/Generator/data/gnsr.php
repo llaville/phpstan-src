@@ -168,6 +168,6 @@ class FooGeneric
 }
 
 function (): void {
-	//$foo = new FooGeneric(5);
-	//assertType('GeneratorNodeScopeResolverTest\\FooGeneric<int>', $foo);
+	$foo = new FooGeneric(5);
+	assertType('GeneratorNodeScopeResolverTest\\FooGeneric<int>', $foo);
 };
