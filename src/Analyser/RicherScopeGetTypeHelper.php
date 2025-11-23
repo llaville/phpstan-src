@@ -5,6 +5,7 @@ namespace PHPStan\Analyser;
 use PhpParser\Node;
 use PhpParser\Node\Expr\BinaryOp\Identical;
 use PhpParser\Node\Expr\Variable;
+use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\Reflection\InitializerExprTypeResolver;
 use PHPStan\Rules\Properties\PropertyReflectionFinder;
@@ -42,7 +43,7 @@ final class RicherScopeGetTypeHelper
 		$leftType = $scope->getType($expr->left);
 		$rightType = $scope->getType($expr->right);
 
-		if (!$scope instanceof MutatingScope) {
+		if (!$scope instanceof MutatingScope && !$scope instanceof GeneratorScope) {
 			return $this->initializerExprTypeResolver->resolveIdenticalType($leftType, $rightType);
 		}
 

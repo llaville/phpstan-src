@@ -3,14 +3,12 @@
 namespace PHPStan\Rules\Operators;
 
 use PhpParser\Node;
-use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\RegisteredRule;
+use PHPStan\Node\Expr\TypeExpr;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Rules\RuleLevelHelper;
-use PHPStan\ShouldNotHappenException;
-use PHPStan\TrinaryLogic;
 use PHPStan\Type\ErrorType;
 use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
@@ -44,12 +42,6 @@ final class InvalidUnaryOperationRule implements Rule
 			return [];
 		}
 
-		$varName = '__PHPSTAN__LEFT__';
-		$variable = new Node\Expr\Variable($varName);
-		$newNode = clone $node;
-		$newNode->setAttribute('phpstan_cache_printer', null);
-		$newNode->expr = $variable;
-
 		if ($node instanceof Node\Expr\BitwiseNot) {
 			$callback = static fn (Type $type): bool => $type->isString()->yes() || $type->isInteger()->yes() || $type->isFloat()->yes();
 		} else {
@@ -66,11 +58,9 @@ final class InvalidUnaryOperationRule implements Rule
 			return [];
 		}
 
-		if (!$scope instanceof MutatingScope) {
-			throw new ShouldNotHappenException();
-		}
-
-		$scope = $scope->assignVariable($varName, $exprType, $exprType, TrinaryLogic::createYes());
+		$newNode = clone $node;
+		$newNode->setAttribute('phpstan_cache_printer', null);
+		$newNode->expr = new TypeExpr($exprType);
 		if (!$scope->getType($newNode) instanceof ErrorType) {
 			return [];
 		}

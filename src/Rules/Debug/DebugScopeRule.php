@@ -3,6 +3,7 @@
 namespace PHPStan\Rules\Debug;
 
 use PhpParser\Node;
+use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\AutowiredService;
@@ -45,7 +46,7 @@ final class DebugScopeRule implements Rule
 			return [];
 		}
 
-		if (!$scope instanceof MutatingScope) {
+		if (!$scope instanceof MutatingScope && !$scope instanceof GeneratorScope) {
 			return [];
 		}
 

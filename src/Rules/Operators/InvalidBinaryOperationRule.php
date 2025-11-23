@@ -3,20 +3,20 @@
 namespace PHPStan\Rules\Operators;
 
 use PhpParser\Node;
-use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\RegisteredRule;
+use PHPStan\Node\Expr\TypeExpr;
 use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Rules\RuleLevelHelper;
 use PHPStan\ShouldNotHappenException;
-use PHPStan\TrinaryLogic;
 use PHPStan\Type\ErrorType;
 use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
 use function sprintf;
 use function strlen;
+use function strpos;
 use function substr;
 
 /**
@@ -47,26 +47,14 @@ final class InvalidBinaryOperationRule implements Rule
 			return [];
 		}
 
-		$leftName = '__PHPSTAN__LEFT__';
-		$rightName = '__PHPSTAN__RIGHT__';
-		$leftVariable = new Node\Expr\Variable($leftName);
-		$rightVariable = new Node\Expr\Variable($rightName);
 		if ($node instanceof Node\Expr\AssignOp) {
 			$identifier = 'assignOp';
-			$newNode = clone $node;
-			$newNode->setAttribute('phpstan_cache_printer', null);
 			$left = $node->var;
 			$right = $node->expr;
-			$newNode->var = $leftVariable;
-			$newNode->expr = $rightVariable;
 		} else {
 			$identifier = 'binaryOp';
-			$newNode = clone $node;
-			$newNode->setAttribute('phpstan_cache_printer', null);
 			$left = $node->left;
 			$right = $node->right;
-			$newNode->left = $leftVariable;
-			$newNode->right = $rightVariable;
 		}
 
 		if ($node instanceof Node\Expr\AssignOp\Concat || $node instanceof Node\Expr\BinaryOp\Concat) {
@@ -97,22 +85,39 @@ final class InvalidBinaryOperationRule implements Rule
 			return [];
 		}
 
-		if (!$scope instanceof MutatingScope) {
-			throw new ShouldNotHappenException();
+		if ($node instanceof Node\Expr\AssignOp) {
+			$newNode = clone $node;
+			$newNode->setAttribute('phpstan_cache_printer', null);
+			$newNode->var = new TypeExpr($leftType);
+			$newNode->expr = new TypeExpr($rightType);
+			$newLeft = $newNode->var;
+			$newRight = $newNode->expr;
+		} else {
+			$newNode = clone $node;
+			$newNode->setAttribute('phpstan_cache_printer', null);
+			$newNode->left = new TypeExpr($leftType);
+			$newNode->right = new TypeExpr($rightType);
+			$newLeft = $newNode->left;
+			$newRight = $newNode->right;
 		}
-
-		$scope = $scope
-			->assignVariable($leftName, $leftType, $leftType, TrinaryLogic::createYes())
-			->assignVariable($rightName, $rightType, $rightType, TrinaryLogic::createYes());
 
 		if (!$scope->getType($newNode) instanceof ErrorType) {
 			return [];
 		}
 
+		$leftPrinted = $this->exprPrinter->printExpr($newLeft);
+		$rightPrinted = $this->exprPrinter->printExpr($newRight);
+
+		$opLeftSideTrimmed = substr($this->exprPrinter->printExpr($newNode), strlen($leftPrinted) + 1);
+		$pos = strpos($opLeftSideTrimmed, $rightPrinted);
+		if ($pos === false) {
+			throw new ShouldNotHappenException();
+		}
+
 		return [
 			RuleErrorBuilder::message(sprintf(
 				'Binary operation "%s" between %s and %s results in an error.',
-				substr(substr($this->exprPrinter->printExpr($newNode), strlen($leftName) + 2), 0, -(strlen($rightName) + 2)),
+				substr($opLeftSideTrimmed, 0, $pos - 1),
 				$scope->getType($left)->describe(VerbosityLevel::value()),
 				$scope->getType($right)->describe(VerbosityLevel::value()),
 			))
