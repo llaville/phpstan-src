@@ -311,6 +311,10 @@ final class StaticCallHandler implements ExprHandler
 		}
 		$scope = $classResult->scope;
 
+		$normalizedMethodCall = $expr;
+		$methodReflection = null;
+		$parametersAcceptor = null;
+		$staticMethodCalledOnType = TypeCombinator::removeNull($classResult->type)->getObjectTypeOrClassStringObjectType();
 		if ($expr->name instanceof Expr) {
 			$nameResult = yield new ExprAnalysisRequest($stmt, $expr->name, $scope, $context->enterDeep(), $alternativeNodeCallback);
 			$hasYield = $hasYield || $nameResult->hasYield;
@@ -344,7 +348,6 @@ final class StaticCallHandler implements ExprHandler
 				$nativeMethodReturnType = $nativeMethodReturnTypeGen->getReturn();
 			}
 
-			$staticMethodCalledOnType = TypeCombinator::removeNull($classResult->type)->getObjectTypeOrClassStringObjectType();
 			$methodName = $expr->name->toString();
 			$staticMethodCalledOnType = $scope->filterTypeWithMethod($staticMethodCalledOnType, $methodName);
 			if ($staticMethodCalledOnType !== null && $staticMethodCalledOnType->hasMethod($methodName)->yes()) {
@@ -357,31 +360,35 @@ final class StaticCallHandler implements ExprHandler
 					$methodReflection->getNamedArgumentsVariants(),
 				)))->value;
 				yield new RestoreStorageRequest($storage);
-				$normalizedMethodCall = ArgumentsNormalizer::reorderStaticCallArguments($parametersAcceptor, $expr);
-				$methodReturnTypeGen = $this->methodCallHelper->methodCallReturnType(
-					$scope,
-					$methodReflection,
-					$parametersAcceptor,
-					$normalizedMethodCall,
-					$staticMethodCalledOnType->getObjectClassNames(),
-				);
-				yield from $methodReturnTypeGen;
-				$methodReturnType = $methodReturnTypeGen->getReturn();
-				if ($methodReturnType === null) {
-					$methodReturnType = new ErrorType();
-				} else {
-					$methodReturnTypeGen = $this->nullsafeShortCircuitingHelper->getNullsafeShortCircuitingType($class, $methodReturnType);
-					yield from $methodReturnTypeGen;
-					$methodReturnType = $methodReturnTypeGen->getReturn();
-				}
-			} else {
-				$methodReturnType = new ErrorType();
+				$normalizedMethodCall = ArgumentsNormalizer::reorderStaticCallArguments($parametersAcceptor, $expr) ?? $expr;
 			}
 		}
 
-		$argsResultGen = $this->argsHandler->processArgs($stmt, null, null, null, $expr, $scope, $context, $alternativeNodeCallback);
+		$argsResultGen = $this->argsHandler->processArgs($stmt, null, null, null, $normalizedMethodCall, $scope, $context, $alternativeNodeCallback);
 		yield from $argsResultGen;
 		$argsResult = $argsResultGen->getReturn();
+
+		if ($methodReflection !== null && $parametersAcceptor !== null && $staticMethodCalledOnType !== null) {
+			$methodReturnTypeGen = $this->methodCallHelper->methodCallReturnType(
+				$scope,
+				$methodReflection,
+				$parametersAcceptor,
+				$normalizedMethodCall,
+				$staticMethodCalledOnType->getObjectClassNames(),
+			);
+			yield from $methodReturnTypeGen;
+			$methodReturnType = $methodReturnTypeGen->getReturn();
+			if ($methodReturnType === null) {
+				$methodReturnType = new ErrorType();
+			} else {
+				$methodReturnTypeGen = $this->nullsafeShortCircuitingHelper->getNullsafeShortCircuitingType($class, $methodReturnType);
+				yield from $methodReturnTypeGen;
+				$methodReturnType = $methodReturnTypeGen->getReturn();
+			}
+		} else {
+			$methodReturnType = new ErrorType();
+		}
+
 		$scope = $argsResult->scope;
 
 		return new ExprAnalysisResult(
