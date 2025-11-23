@@ -25,6 +25,7 @@ use PHPStan\DependencyInjection\Type\ParameterOutTypeExtensionProvider;
 use PHPStan\File\FileHelper;
 use PHPStan\File\FileReader;
 use PHPStan\Fixable\Patcher;
+use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Php\PhpVersion;
 use PHPStan\PhpDoc\PhpDocInheritanceResolver;
 use PHPStan\Reflection\ClassReflectionFactory;
@@ -39,6 +40,7 @@ use PHPStan\Type\FileTypeMapper;
 use function array_map;
 use function array_merge;
 use function count;
+use function getenv;
 use function implode;
 use function sprintf;
 use function str_replace;
@@ -80,6 +82,15 @@ abstract class RuleTestCase extends PHPStanTestCase
 
 	protected function createNodeScopeResolver(): NodeScopeResolver|GeneratorNodeScopeResolver
 	{
+		$enableGnsr = getenv('PHPSTAN_GNSR');
+		if ($enableGnsr === '1') {
+			$container = self::getContainer();
+
+			return new GeneratorNodeScopeResolver(
+				$container->getByType(ExprPrinter::class),
+				$container,
+			);
+		}
 		$readWritePropertiesExtensions = $this->getReadWritePropertiesExtensions();
 		$reflectionProvider = $this->createReflectionProvider();
 		$typeSpecifier = $this->getTypeSpecifier();

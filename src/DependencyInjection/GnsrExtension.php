@@ -1,0 +1,39 @@
+<?php declare(strict_types = 1);
+
+namespace PHPStan\DependencyInjection;
+
+use Nette\DI\CompilerExtension;
+use Nette\DI\Definitions\ServiceDefinition;
+use Override;
+use PHPStan\Analyser\Analyser;
+use PHPStan\Analyser\FileAnalyser;
+use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
+use PHPStan\ShouldNotHappenException;
+use function getenv;
+
+final class GnsrExtension extends CompilerExtension
+{
+
+	#[Override]
+	public function beforeCompile()
+	{
+		$enable = getenv('PHPSTAN_GNSR');
+		if ($enable !== '1') {
+			return;
+		}
+
+		$builder = $this->getContainerBuilder();
+		$analyserDef = $builder->getDefinitionByType(Analyser::class);
+		if (!$analyserDef instanceof ServiceDefinition) {
+			throw new ShouldNotHappenException();
+		}
+		$analyserDef->setArgument('nodeScopeResolver', '@' . GeneratorNodeScopeResolver::class);
+
+		$fileAnalyserDef = $builder->getDefinitionByType(FileAnalyser::class);
+		if (!$fileAnalyserDef instanceof ServiceDefinition) {
+			throw new ShouldNotHappenException();
+		}
+		$fileAnalyserDef->setArgument('nodeScopeResolver', '@' . GeneratorNodeScopeResolver::class);
+	}
+
+}

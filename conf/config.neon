@@ -237,6 +237,7 @@ extensions:
 	validateExcludePaths: PHPStan\DependencyInjection\ValidateExcludePathsExtension
 	autowiredAttributeServices: PHPStan\DependencyInjection\AutowiredAttributeServicesExtension
 	validateServiceTags: PHPStan\DependencyInjection\ValidateServiceTagsExtension
+	gnsr: PHPStan\DependencyInjection\GnsrExtension
 
 autowiredAttributeServices:
 	level: null

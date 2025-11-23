@@ -17,6 +17,7 @@ use PHPStan\Analyser\Generator\NodeHandler\AttrGroupsHandler;
 use PHPStan\Analyser\Generator\NodeHandler\StmtsHandler;
 use PHPStan\Analyser\Scope;
 use PHPStan\Analyser\StatementContext;
+use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\DependencyInjection\Container;
 use PHPStan\NeverException;
 use PHPStan\Node\FunctionCallableNode;
@@ -73,6 +74,7 @@ use function sprintf;
  * @phpstan-type GeneratorTValueType = ExprAnalysisRequest|StmtAnalysisRequest|StmtsAnalysisRequest|NodeCallbackRequest|AttrGroupsAnalysisRequest|TypeExprRequest|PersistStorageRequest|RestoreStorageRequest|RunInFiberRequest<mixed>
  * @phpstan-type GeneratorTSendType = ExprAnalysisResult|StmtAnalysisResult|TypeExprResult|ExprAnalysisResultStorage|RunInFiberResult<mixed>|null
  */
+#[AutowiredService]
 final class GeneratorNodeScopeResolver
 {
 

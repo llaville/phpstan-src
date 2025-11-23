@@ -18,6 +18,7 @@ use PHPStan\DependencyInjection\Type\ParameterOutTypeExtensionProvider;
 use PHPStan\File\FileHelper;
 use PHPStan\File\SystemAgnosticSimpleRelativePathHelper;
 use PHPStan\Node\InClassNode;
+use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Php\PhpVersion;
 use PHPStan\PhpDoc\PhpDocInheritanceResolver;
 use PHPStan\PhpDoc\TypeStringResolver;
@@ -38,6 +39,7 @@ use function count;
 use function fclose;
 use function fgets;
 use function fopen;
+use function getenv;
 use function in_array;
 use function is_dir;
 use function is_string;
@@ -55,8 +57,16 @@ abstract class TypeInferenceTestCase extends PHPStanTestCase
 
 	protected static function createNodeScopeResolver(): NodeScopeResolver|GeneratorNodeScopeResolver
 	{
-		$reflectionProvider = self::createReflectionProvider();
 		$container = self::getContainer();
+		$enableGnsr = getenv('PHPSTAN_GNSR');
+		if ($enableGnsr === '1') {
+			return new GeneratorNodeScopeResolver(
+				$container->getByType(ExprPrinter::class),
+				$container,
+			);
+		}
+
+		$reflectionProvider = self::createReflectionProvider();
 		$typeSpecifier = $container->getService('typeSpecifier');
 
 		return new NodeScopeResolver(
