@@ -135,6 +135,24 @@ class FooWithStaticMethods
 
 	}
 
+	/**
+	 * @template T
+	 * @param T $a
+	 * @return T
+	 */
+	public static function genericStatic($a)
+	{
+
+	}
+
+	public function doFoo2(): void
+	{
+		assertType('1', self::genericStatic(1));
+
+		$s = 'GeneratorNodeScopeResolverTest\\FooWithStaticMethods';
+		assertType('1', $s::genericStatic(1));
+	}
+
 }
 
 class ClosureFromCallableExtension
@@ -170,4 +188,15 @@ class FooGeneric
 function (): void {
 	$foo = new FooGeneric(5);
 	assertType('GeneratorNodeScopeResolverTest\\FooGeneric<int>', $foo);
+};
+
+function (): void {
+	$c = new /** @template T of int */ class(1, 2, 3) {
+		/**
+		 * @param T $i
+		 */
+		public function __construct(private int $i, private int $j, private int $k) {
+
+		}
+	};
 };
