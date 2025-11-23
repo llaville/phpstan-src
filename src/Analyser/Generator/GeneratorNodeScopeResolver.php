@@ -252,14 +252,7 @@ final class GeneratorNodeScopeResolver
 					$gen->generator->current();
 					continue;
 				} elseif ($yielded instanceof PersistStorageRequest) {
-					$stack[] = $gen;
-					$gen = new IdentifiedGeneratorInStack(
-						$this->persistStorage($exprAnalysisResultStorage),
-						new Stmt\Expression(new Node\Scalar\String_('fake')),
-						$yielded->originFile,
-						$yielded->originLine,
-					);
-					$gen->generator->current();
+					$gen->generator->send($exprAnalysisResultStorage->duplicate());
 					continue;
 				} elseif ($yielded instanceof RestoreStorageRequest) {
 					$exprAnalysisResultStorage = $yielded->storage->duplicate();
@@ -375,15 +368,6 @@ final class GeneratorNodeScopeResolver
 		/** @var AttrGroupsHandler $handler */
 		$handler = $this->container->getByType(AttrGroupsHandler::class);
 		yield from $handler->processAttributeGroups($stmt, $attrGroups, $scope, $alternativeNodeCallback);
-	}
-
-	/**
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, ExprAnalysisResultStorage>
-	 */
-	private function persistStorage(ExprAnalysisResultStorage $storage): Generator
-	{
-		yield from [];
-		return $storage;
 	}
 
 	/**

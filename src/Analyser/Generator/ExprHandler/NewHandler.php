@@ -173,7 +173,6 @@ final class NewHandler implements ExprHandler
 
 		if ($constructorReflection !== null) {
 			$storage = yield new PersistStorageRequest();
-			yield new RestoreStorageRequest($storage);
 			$parametersAcceptor = (yield new RunInFiberRequest(static fn () => ParametersAcceptorSelector::selectFromArgs(
 				$scope,
 				$expr->getArgs(),
@@ -231,7 +230,6 @@ final class NewHandler implements ExprHandler
 		if ($classReflection->hasConstructor()) {
 			$constructorReflection = $classReflection->getConstructor();
 			$storage = yield new PersistStorageRequest();
-			yield new RestoreStorageRequest($storage);
 			$parametersAcceptor = (yield new RunInFiberRequest(static fn () => ParametersAcceptorSelector::selectFromArgs(
 				$scope,
 				$expr->getArgs(),
@@ -399,7 +397,6 @@ final class NewHandler implements ExprHandler
 		);
 
 		$storage = yield new PersistStorageRequest();
-		yield new RestoreStorageRequest($storage);
 		$parametersAcceptor = (yield new RunInFiberRequest(static fn () => ParametersAcceptorSelector::selectFromArgs(
 			$scope,
 			$methodCall->getArgs(),
