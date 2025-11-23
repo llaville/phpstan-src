@@ -5,7 +5,6 @@ namespace PHPStan\Analyser\Generator\ExprHandler;
 use ArrayAccess;
 use Closure;
 use Generator;
-use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ArrayDimFetch;
@@ -30,6 +29,7 @@ use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\Generator\InternalThrowPoint;
 use PHPStan\Analyser\Generator\NodeCallbackRequest;
+use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\Generator\NoopNodeCallback;
 use PHPStan\Analyser\Generator\TypeExprRequest;
 use PHPStan\Analyser\ImpurePoint;
@@ -44,7 +44,6 @@ use PHPStan\Node\Expr\SetExistingOffsetValueTypeExpr;
 use PHPStan\Node\Expr\SetOffsetValueTypeExpr;
 use PHPStan\Node\PropertyAssignNode;
 use PHPStan\Node\VariableAssignNode;
-use PHPStan\Node\VarTagChangedExpressionTypeNode;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\Php\PhpMethodFromParserNodeReflection;
 use PHPStan\Reflection\Php\PhpPropertyReflection;
@@ -57,7 +56,6 @@ use PHPStan\Type\ArrayType;
 use PHPStan\Type\Constant\ConstantArrayType;
 use PHPStan\Type\Constant\ConstantIntegerType;
 use PHPStan\Type\Constant\ConstantStringType;
-use PHPStan\Type\FileTypeMapper;
 use PHPStan\Type\MixedType;
 use PHPStan\Type\NullType;
 use PHPStan\Type\ObjectType;
@@ -74,7 +72,6 @@ use function array_reverse;
 use function array_slice;
 use function count;
 use function in_array;
-use function is_int;
 use function is_string;
 
 /**
@@ -88,8 +85,8 @@ final class AssignHandler implements ExprHandler
 
 	public function __construct(
 		private PhpVersion $phpVersion,
-		private FileTypeMapper $fileTypeMapper,
 		private AssignHelper $assignHelper,
+		private VarAnnotationHelper $varAnnotationHelper,
 		#[AutowiredParameter(ref: '%exceptions.implicitThrows%')]
 		private readonly bool $implicitThrows,
 	)
@@ -172,11 +169,11 @@ final class AssignHandler implements ExprHandler
 		$vars = $this->getAssignedVariables($expr->var);
 		if (count($vars) > 0) {
 			$varChangedScope = false;
-			$processVarGen = $this->processVarAnnotation($scope, $vars, $stmt, $varChangedScope);
+			$processVarGen = $this->varAnnotationHelper->processVarAnnotation($scope, $vars, $stmt, $varChangedScope);
 			yield from $processVarGen;
 			$scope = $processVarGen->getReturn();
 			if (!$varChangedScope) {
-				$stmtVarGen = $this->processStmtVarAnnotation($scope, $stmt, null, $alternativeNodeCallback);
+				$stmtVarGen = $this->varAnnotationHelper->processStmtVarAnnotation($scope, $stmt, null, $alternativeNodeCallback);
 				yield from $stmtVarGen;
 				$scope = $stmtVarGen->getReturn();
 			}
@@ -226,146 +223,6 @@ final class AssignHandler implements ExprHandler
 		}
 
 		return [];
-	}
-
-	/**
-	 * @param array<int, string> $variableNames
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, GeneratorScope>
-	 */
-	private function processVarAnnotation(GeneratorScope $scope, array $variableNames, Node\Stmt $node, bool &$changed = false): Generator
-	{
-		$function = $scope->getFunction();
-		$varTags = [];
-		foreach ($node->getComments() as $comment) {
-			if (!$comment instanceof Doc) {
-				continue;
-			}
-
-			$resolvedPhpDoc = $this->fileTypeMapper->getResolvedPhpDoc(
-				$scope->getFile(),
-				$scope->isInClass() ? $scope->getClassReflection()->getName() : null,
-				$scope->isInTrait() ? $scope->getTraitReflection()->getName() : null,
-				$function !== null ? $function->getName() : null,
-				$comment->getText(),
-			);
-			foreach ($resolvedPhpDoc->getVarTags() as $key => $varTag) {
-				$varTags[$key] = $varTag;
-			}
-		}
-
-		if (count($varTags) === 0) {
-			return $scope;
-		}
-
-		foreach ($variableNames as $variableName) {
-			if (!isset($varTags[$variableName])) {
-				continue;
-			}
-
-			$variableType = $varTags[$variableName]->getType();
-			$changed = true;
-			$assignVarGen = $scope->assignVariable($variableName, $variableType, new MixedType(), TrinaryLogic::createYes());
-			yield from $assignVarGen;
-			$scope = $assignVarGen->getReturn();
-		}
-
-		if (count($variableNames) === 1 && count($varTags) === 1 && isset($varTags[0])) {
-			$variableType = $varTags[0]->getType();
-			$changed = true;
-			$assignVarGen = $scope->assignVariable($variableNames[0], $variableType, new MixedType(), TrinaryLogic::createYes());
-			yield from $assignVarGen;
-			$scope = $assignVarGen->getReturn();
-		}
-
-		return $scope;
-	}
-
-	/**
-	 * @param (callable(Node, Scope, callable(Node, Scope): void): void)|null $alternativeNodeCallback
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, GeneratorScope>
-	 */
-	private function processStmtVarAnnotation(GeneratorScope $scope, Node\Stmt $stmt, ?Expr $defaultExpr, ?callable $alternativeNodeCallback): Generator
-	{
-		$function = $scope->getFunction();
-		$variableLessTags = [];
-
-		foreach ($stmt->getComments() as $comment) {
-			if (!$comment instanceof Doc) {
-				continue;
-			}
-
-			$resolvedPhpDoc = $this->fileTypeMapper->getResolvedPhpDoc(
-				$scope->getFile(),
-				$scope->isInClass() ? $scope->getClassReflection()->getName() : null,
-				$scope->isInTrait() ? $scope->getTraitReflection()->getName() : null,
-				$function !== null ? $function->getName() : null,
-				$comment->getText(),
-			);
-
-			$assignedVariable = null;
-			if (
-				$stmt instanceof Node\Stmt\Expression
-				&& ($stmt->expr instanceof Assign || $stmt->expr instanceof AssignRef)
-				&& $stmt->expr->var instanceof Variable
-				&& is_string($stmt->expr->var->name)
-			) {
-				$assignedVariable = $stmt->expr->var->name;
-			}
-
-			foreach ($resolvedPhpDoc->getVarTags() as $name => $varTag) {
-				if (is_int($name)) {
-					$variableLessTags[] = $varTag;
-					continue;
-				}
-
-				if ($name === $assignedVariable) {
-					continue;
-				}
-
-				$certainty = $scope->hasVariableType($name);
-				if ($certainty->no()) {
-					continue;
-				}
-
-				if ($scope->isInClass() && $scope->getFunction() === null) {
-					continue;
-				}
-
-				if ($scope->canAnyVariableExist()) {
-					$certainty = TrinaryLogic::createYes();
-				}
-
-				$variableNode = new Variable($name, $stmt->getAttributes());
-				$originalType = $scope->getVariableType($name);
-				if (!$originalType->equals($varTag->getType())) {
-					yield new NodeCallbackRequest(new VarTagChangedExpressionTypeNode($varTag, $variableNode), $scope, $alternativeNodeCallback);
-				}
-
-				$variableNodeResult = yield new ExprAnalysisRequest($stmt, $variableNode, $scope, ExpressionContext::createDeep(), new NoopNodeCallback());
-
-				$assignVarGen = $scope->assignVariable(
-					$name,
-					$varTag->getType(),
-					$variableNodeResult->nativeType,
-					$certainty,
-				);
-				yield from $assignVarGen;
-				$scope = $assignVarGen->getReturn();
-			}
-		}
-
-		if (count($variableLessTags) === 1 && $defaultExpr !== null) {
-			//$originalType = $scope->getType($defaultExpr);
-			$varTag = $variableLessTags[0];
-			/*if (!$originalType->equals($varTag->getType())) {
-				yield new NodeCallbackRequest(new VarTagChangedExpressionTypeNode($varTag, $defaultExpr), $scope);
-			}*/
-			$assignExprGen = $scope->assignExpression($defaultExpr, $varTag->getType(), new MixedType());
-			yield from $assignExprGen;
-			$scope = $assignExprGen->getReturn();
-		}
-
-		return $scope;
 	}
 
 	/**

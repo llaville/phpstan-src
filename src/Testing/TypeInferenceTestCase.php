@@ -7,6 +7,7 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Name;
 use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScopeFactory;
+use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\NodeScopeResolver;
 use PHPStan\Analyser\Scope;
@@ -62,6 +63,7 @@ abstract class TypeInferenceTestCase extends PHPStanTestCase
 		if ($enableGnsr === '1') {
 			return new GeneratorNodeScopeResolver(
 				$container->getByType(ExprPrinter::class),
+				$container->getByType(VarAnnotationHelper::class),
 				$container,
 			);
 		}

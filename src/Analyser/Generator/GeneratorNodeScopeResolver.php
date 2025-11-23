@@ -12,9 +12,13 @@ use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Foreach_;
+use PhpParser\Node\Stmt\Return_;
+use PhpParser\Node\Stmt\Static_;
 use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\Generator\NodeHandler\AttrGroupsHandler;
 use PHPStan\Analyser\Generator\NodeHandler\StmtsHandler;
+use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\Scope;
 use PHPStan\Analyser\StatementContext;
 use PHPStan\DependencyInjection\AutowiredService;
@@ -80,6 +84,7 @@ final class GeneratorNodeScopeResolver
 
 	public function __construct(
 		private ExprPrinter $exprPrinter,
+		private VarAnnotationHelper $varAnnotationHelper,
 		private Container $container,
 	)
 	{
@@ -341,7 +346,40 @@ final class GeneratorNodeScopeResolver
 	 */
 	private function analyseStmt(Stmt $stmt, GeneratorScope $scope, StatementContext $context, ?callable $alternativeNodeCallback): Generator
 	{
-		yield new NodeCallbackRequest($stmt, $scope, $alternativeNodeCallback);
+		if (
+			!$stmt instanceof Static_
+			&& !$stmt instanceof Foreach_
+			&& !$stmt instanceof Node\Stmt\Global_
+			&& !$stmt instanceof Node\Stmt\Property
+			&& !$stmt instanceof Node\Stmt\ClassConst
+			&& !$stmt instanceof Node\Stmt\Const_
+		) {
+			$stmtVarGen = $this->varAnnotationHelper->processStmtVarAnnotation($scope, $stmt, null, $alternativeNodeCallback);
+			yield from $stmtVarGen;
+			$scope = $stmtVarGen->getReturn();
+		}
+
+		$stmtScope = $scope;
+		if ($stmt instanceof Node\Stmt\Expression && $stmt->expr instanceof Expr\Throw_) {
+			$stmtScopeGen = $this->varAnnotationHelper->processStmtVarAnnotation($scope, $stmt, $stmt->expr->expr, $alternativeNodeCallback);
+			yield from $stmtScopeGen;
+			$stmtScope = $stmtScopeGen->getReturn();
+		}
+		if ($stmt instanceof Return_) {
+			$stmtScopeGen = $this->varAnnotationHelper->processStmtVarAnnotation($scope, $stmt, $stmt->expr, $alternativeNodeCallback);
+			yield from $stmtScopeGen;
+			$stmtScope = $stmtScopeGen->getReturn();
+		}
+
+		yield new NodeCallbackRequest($stmt, $stmtScope, $alternativeNodeCallback);
+
+		$overridingThrowPoints = $this->varAnnotationHelper->getOverridingThrowPoints($stmt, $scope);
+
+		if ($stmt instanceof Stmt\Expression) {
+			if ($stmt->expr instanceof Expr\Throw_) {
+				$scope = $stmtScope;
+			}
+		}
 
 		/**
 		 * @var StmtHandler<Stmt> $stmtHandler
@@ -354,7 +392,12 @@ final class GeneratorNodeScopeResolver
 			$gen = $stmtHandler->analyseStmt($stmt, $scope, $context, $alternativeNodeCallback);
 			yield from $gen;
 
-			return $gen->getReturn();
+			$stmtResult = $gen->getReturn();
+			if ($overridingThrowPoints !== null) {
+				$stmtResult = $stmtResult->withThrowPoints($overridingThrowPoints);
+			}
+
+			return $stmtResult;
 		}
 
 		throw new ShouldNotHappenException('Unhandled stmt: ' . get_class($stmt));

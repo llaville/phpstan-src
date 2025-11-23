@@ -40,4 +40,20 @@ final class StmtAnalysisResult
 		);
 	}
 
+	/**
+	 * @param InternalThrowPoint[] $throwPoints
+	 */
+	public function withThrowPoints(array $throwPoints): self
+	{
+		return new self(
+			$this->scope,
+			$this->hasYield,
+			$this->isAlwaysTerminating,
+			$this->exitPoints,
+			$throwPoints,
+			$this->impurePoints,
+			$this->endStatements,
+		);
+	}
+
 }

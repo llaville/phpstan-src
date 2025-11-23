@@ -2,6 +2,7 @@
 
 namespace PHPStan\Analyser\Generator;
 
+use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Testing\TypeInferenceTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,6 +34,7 @@ class GeneratorNodeScopeResolverTest extends TypeInferenceTestCase
 	{
 		return new GeneratorNodeScopeResolver(
 			self::getContainer()->getByType(ExprPrinter::class),
+			self::getContainer()->getByType(VarAnnotationHelper::class),
 			self::getContainer(),
 		);
 	}

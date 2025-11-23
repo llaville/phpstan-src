@@ -3,6 +3,7 @@
 namespace PHPStan\Analyser\Generator;
 
 use PhpParser\Node;
+use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\Printer\ExprPrinter;
@@ -183,6 +184,7 @@ class GeneratorNodeScopeResolverRuleTest extends RuleTestCase
 		$container = self::getContainer();
 		return new GeneratorNodeScopeResolver(
 			$container->getByType(ExprPrinter::class),
+			$container->getByType(VarAnnotationHelper::class),
 			$container,
 		);
 	}

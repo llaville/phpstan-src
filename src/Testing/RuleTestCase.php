@@ -9,6 +9,7 @@ use PHPStan\Analyser\Error;
 use PHPStan\Analyser\FileAnalyser;
 use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScopeFactory;
+use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\IgnoreErrorExtensionProvider;
 use PHPStan\Analyser\InternalError;
 use PHPStan\Analyser\LocalIgnoresProcessor;
@@ -88,6 +89,7 @@ abstract class RuleTestCase extends PHPStanTestCase
 
 			return new GeneratorNodeScopeResolver(
 				$container->getByType(ExprPrinter::class),
+				$container->getByType(VarAnnotationHelper::class),
 				$container,
 			);
 		}
