@@ -23,7 +23,6 @@ final class IdentifiedGeneratorInStack
 	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, void>| // analyseAttrGroups
 	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, ExprAnalysisResult>| // analyseExpr
 	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, TypeExprResult>| // analyseExprForType
-	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, ExprAnalysisResultStorage>| // persistStorage
 	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, RunInFiberResult<mixed>>| // runInFiber
 	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, null> // invokeNodeCallback
 	 * ) $generator
