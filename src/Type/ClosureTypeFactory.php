@@ -74,50 +74,50 @@ final class ClosureTypeFactory
 
 		$parameters = array_map(fn (BetterReflectionParameter $parameter) => new class($parameter, $this->initializerExprTypeResolver) implements ParameterReflection {
 
-				public function __construct(private BetterReflectionParameter $reflection, private InitializerExprTypeResolver $initializerExprTypeResolver)
-				{
+			public function __construct(private BetterReflectionParameter $reflection, private InitializerExprTypeResolver $initializerExprTypeResolver)
+			{
+			}
+
+			public function getName(): string
+			{
+				return $this->reflection->getName();
+			}
+
+			public function isOptional(): bool
+			{
+				return $this->reflection->isOptional();
+			}
+
+			public function getType(): Type
+			{
+				return TypehintHelper::decideTypeFromReflection(ReflectionType::fromTypeOrNull($this->reflection->getType()), isVariadic: $this->reflection->isVariadic());
+			}
+
+			public function passedByReference(): PassedByReference
+			{
+				return $this->reflection->isPassedByReference()
+					? PassedByReference::createCreatesNewVariable()
+					: PassedByReference::createNo();
+			}
+
+			public function isVariadic(): bool
+			{
+				return $this->reflection->isVariadic();
+			}
+
+			public function getDefaultValue(): ?Type
+			{
+				if (! $this->reflection->isDefaultValueAvailable()) {
+					return null;
 				}
 
-				public function getName(): string
-				{
-					return $this->reflection->getName();
+				$defaultExpr = $this->reflection->getDefaultValueExpression();
+				if ($defaultExpr === null) {
+					return null;
 				}
 
-				public function isOptional(): bool
-				{
-					return $this->reflection->isOptional();
-				}
-
-				public function getType(): Type
-				{
-					return TypehintHelper::decideTypeFromReflection(ReflectionType::fromTypeOrNull($this->reflection->getType()), isVariadic: $this->reflection->isVariadic());
-				}
-
-				public function passedByReference(): PassedByReference
-				{
-					return $this->reflection->isPassedByReference()
-						? PassedByReference::createCreatesNewVariable()
-						: PassedByReference::createNo();
-				}
-
-				public function isVariadic(): bool
-				{
-					return $this->reflection->isVariadic();
-				}
-
-				public function getDefaultValue(): ?Type
-				{
-					if (! $this->reflection->isDefaultValueAvailable()) {
-						return null;
-					}
-
-					$defaultExpr = $this->reflection->getDefaultValueExpression();
-					if ($defaultExpr === null) {
-						return null;
-					}
-
-					return $this->initializerExprTypeResolver->getType($defaultExpr, InitializerExprContext::fromReflectionParameter(new ReflectionParameter($this->reflection)));
-				}
+				return $this->initializerExprTypeResolver->getType($defaultExpr, InitializerExprContext::fromReflectionParameter(new ReflectionParameter($this->reflection)));
+			}
 
 		}, $betterReflectionFunction->getParameters());
 
