@@ -9,6 +9,8 @@ use PHPStan\Type\Type;
 final class ExprAnalysisResult
 {
 
+	public readonly Type $keepVoidType;
+
 	/**
 	 * @param InternalThrowPoint[] $throwPoints
 	 * @param ImpurePoint[] $impurePoints
@@ -23,8 +25,10 @@ final class ExprAnalysisResult
 		public readonly array $impurePoints,
 		public readonly SpecifiedTypes $specifiedTruthyTypes,
 		public readonly SpecifiedTypes $specifiedFalseyTypes,
+		?Type $keepVoidType = null,
 	)
 	{
+		$this->keepVoidType = $keepVoidType ?? $type;
 	}
 
 }

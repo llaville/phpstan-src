@@ -47,6 +47,7 @@ namespace PHPStan\Analyser\Generator\ExprHandler {
 		{
 			$scope->getType();
 			$scope->getNativeType();
+			$scope->getKeepVoidType();
 		}
 
 	}

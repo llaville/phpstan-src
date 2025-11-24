@@ -61,6 +61,7 @@ final class StaticCallHandler implements ExprHandler
 		private readonly DynamicThrowTypeExtensionProvider $dynamicThrowTypeExtensionProvider,
 		private readonly NullsafeShortCircuitingHelper $nullsafeShortCircuitingHelper,
 		private readonly MethodCallHelper $methodCallHelper,
+		private readonly VoidTypeHelper $voidTypeHelper,
 		#[AutowiredParameter(ref: '%exceptions.implicitThrows%')]
 		private readonly bool $implicitThrows,
 	)
@@ -262,9 +263,10 @@ final class StaticCallHandler implements ExprHandler
 		}
 
 		return new ExprAnalysisResult(
-			$methodReturnType,
-			$nativeMethodReturnType,
-			$scope,
+			$this->voidTypeHelper->transformVoidToNull($methodReturnType),
+			$this->voidTypeHelper->transformVoidToNull($nativeMethodReturnType),
+			keepVoidType: $methodReturnType,
+			scope: $scope,
 			hasYield: $hasYield || $argsResult->hasYield,
 			isAlwaysTerminating: ($methodReturnType instanceof NeverType && $methodReturnType->isExplicit()) || $argsResult->isAlwaysTerminating,
 			throwPoints: array_merge($throwPoints, $argsResult->throwPoints),
@@ -392,9 +394,10 @@ final class StaticCallHandler implements ExprHandler
 		$scope = $argsResult->scope;
 
 		return new ExprAnalysisResult(
-			$methodReturnType,
-			$nativeMethodReturnType,
-			$scope,
+			$this->voidTypeHelper->transformVoidToNull($methodReturnType),
+			$this->voidTypeHelper->transformVoidToNull($nativeMethodReturnType),
+			keepVoidType: $methodReturnType,
+			scope: $scope,
 			hasYield: $hasYield || $argsResult->hasYield,
 			isAlwaysTerminating: $isAlwaysTerminating || $argsResult->isAlwaysTerminating,
 			throwPoints: array_merge($throwPoints, $argsResult->throwPoints),

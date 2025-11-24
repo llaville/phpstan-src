@@ -187,7 +187,7 @@ final class ArrowFunctionHandler implements ExprHandler
 				new VoidType(),
 			]);
 		} else {
-			$returnType = $arrowFunctionExprResult->type; // todo keep void
+			$returnType = $arrowFunctionExprResult->keepVoidType;
 			if ($node->returnType !== null) {
 				$nativeReturnType = $scope->getFunctionType($node->returnType, false, false);
 				$returnType = GeneratorScope::intersectButNotNever($nativeReturnType, $returnType);

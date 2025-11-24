@@ -43,7 +43,6 @@ final class MethodCallHelper
 	): Generator
 	{
 		if ($normalizedMethodCall === null) {
-			//return $this->transformVoidToNull($parametersAcceptor->getReturnType(), $methodCall);
 			return $parametersAcceptor->getReturnType();
 		}
 
@@ -83,11 +82,9 @@ final class MethodCallHelper
 		}
 
 		if (count($resolvedTypes) > 0) {
-			//return $this->transformVoidToNull(TypeCombinator::union(...$resolvedTypes), $methodCall);
 			return TypeCombinator::union(...$resolvedTypes);
 		}
 
-		//return $this->transformVoidToNull($parametersAcceptor->getReturnType(), $methodCall);
 		return $parametersAcceptor->getReturnType();
 	}
 

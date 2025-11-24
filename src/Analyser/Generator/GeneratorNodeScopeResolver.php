@@ -541,7 +541,7 @@ final class GeneratorNodeScopeResolver
 		$result = $storage->findExprAnalysisResult($expr);
 		if ($result !== null) {
 			yield from [];
-			return new TypeExprResult($result->type, $result->nativeType);
+			return new TypeExprResult($result->type, $result->nativeType, $result->keepVoidType);
 		}
 
 		throw new ShouldNotHappenException('Not yet implemented - park expr request for type until later when it has been analysed');

@@ -69,7 +69,7 @@ final class ScopeGetTypeInGeneratorNamespaceRule implements Rule
 			$invalidNamespace,
 		);
 
-		if (in_array($methodReflection->getName(), ['getType', 'getNativeType'], true)) {
+		if (in_array($methodReflection->getName(), ['getType', 'getNativeType', 'getKeepVoidType'], true)) {
 			return [
 				RuleErrorBuilder::message($message)
 					->identifier('phpstan.scopeGetType')

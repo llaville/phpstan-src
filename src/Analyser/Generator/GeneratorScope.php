@@ -2473,8 +2473,11 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 
 	public function getKeepVoidType(Expr $node): Type
 	{
-		// TODO: Implement getKeepVoidType() method.
-		throw new ShouldNotHappenException('Not implemented yet');
+		return TypeUtils::resolveLateResolvableTypes(
+			Fiber::suspend(
+				new ExprAnalysisRequest(new Node\Stmt\Expression($node), $node, $this, ExpressionContext::createTopLevel(), new NoopNodeCallback()),
+			)->keepVoidType,
+		);
 	}
 
 	/**

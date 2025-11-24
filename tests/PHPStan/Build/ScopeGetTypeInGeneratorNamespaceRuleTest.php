@@ -40,20 +40,25 @@ class ScopeGetTypeInGeneratorNamespaceRuleTest extends RuleTestCase
 				'Use yield new TypeExprRequest instead.',
 			],
 			[
-				'Scope::filterByTruthyValue() cannot be called in PHPStan\Analyser\Generator namespace.',
-				59,
+				'Scope::getKeepVoidType() cannot be called in PHPStan\Analyser\Generator namespace.',
+				50,
+				'Use yield new TypeExprRequest instead.',
 			],
 			[
-				'Scope::filterByFalseyValue() cannot be called in PHPStan\Analyser\Generator namespace.',
+				'Scope::filterByTruthyValue() cannot be called in PHPStan\Analyser\Generator namespace.',
 				60,
 			],
 			[
+				'Scope::filterByFalseyValue() cannot be called in PHPStan\Analyser\Generator namespace.',
+				61,
+			],
+			[
 				'Scope::filterByTruthyValue() cannot be called in PHPStan\Analyser\Generator namespace.',
-				65,
+				66,
 			],
 			[
 				'Scope::filterByFalseyValue() cannot be called in PHPStan\Analyser\Generator namespace.',
-				66,
+				67,
 			],
 		]);
 	}
