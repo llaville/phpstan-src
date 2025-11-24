@@ -7,6 +7,7 @@ use PHPStan\Analyser\Generator\AttrGroupsAnalysisRequest;
 use PHPStan\Analyser\Generator\ExprAnalysisRequest;
 use PHPStan\Analyser\Generator\ExprAnalysisResult;
 use PHPStan\Analyser\Generator\ExprAnalysisResultStorage;
+use PHPStan\Analyser\Generator\GetExprAnalysisResultStorageRequest;
 use PHPStan\Analyser\Generator\NodeCallbackRequest;
 use PHPStan\Analyser\Generator\PersistStorageRequest;
 use PHPStan\Analyser\Generator\RestoreStorageRequest;
@@ -15,6 +16,7 @@ use PHPStan\Analyser\Generator\RunInFiberResult;
 use PHPStan\Analyser\Generator\StmtAnalysisRequest;
 use PHPStan\Analyser\Generator\StmtAnalysisResult;
 use PHPStan\Analyser\Generator\StmtsAnalysisRequest;
+use PHPStan\Analyser\Generator\StoreExprResultRequest;
 use PHPStan\Analyser\Generator\TypeExprRequest;
 use PHPStan\Analyser\Generator\TypeExprResult;
 use PHPStan\Analyser\Scope;
@@ -65,6 +67,12 @@ final class GeneratorYieldSendTypeExtension implements ExpressionTypeResolverExt
 		}
 		if ((new ObjectType(PersistStorageRequest::class))->isSuperTypeOf($valueType)->yes()) {
 			return new ObjectType(ExprAnalysisResultStorage::class);
+		}
+		if ((new ObjectType(GetExprAnalysisResultStorageRequest::class))->isSuperTypeOf($valueType)->yes()) {
+			return new ObjectType(ExprAnalysisResultStorage::class);
+		}
+		if ((new ObjectType(StoreExprResultRequest::class))->isSuperTypeOf($valueType)->yes()) {
+			return new NullType();
 		}
 		if ((new ObjectType(RestoreStorageRequest::class))->isSuperTypeOf($valueType)->yes()) {
 			return new NullType();
