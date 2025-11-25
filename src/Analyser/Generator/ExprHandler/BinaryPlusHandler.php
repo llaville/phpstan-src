@@ -47,6 +47,7 @@ final class BinaryPlusHandler implements ExprHandler
 			impurePoints: array_merge($leftResult->impurePoints, $rightResult->impurePoints),
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

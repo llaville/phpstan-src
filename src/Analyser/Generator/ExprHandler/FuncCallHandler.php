@@ -80,6 +80,7 @@ final class FuncCallHandler implements ExprHandler
 					impurePoints: $impurePoints,
 					specifiedTruthyTypes: new SpecifiedTypes(),
 					specifiedFalseyTypes: new SpecifiedTypes(),
+					specifiedNullTypes: new SpecifiedTypes(),
 				);
 			}
 		}

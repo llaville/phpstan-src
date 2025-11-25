@@ -96,6 +96,7 @@ final class ClosureHandler implements ExprHandler
 			impurePoints: [],
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 
@@ -459,6 +460,7 @@ final class ClosureHandler implements ExprHandler
 				impurePoints: $closureStatementResult->impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			),
 			$closureScope,
 		];

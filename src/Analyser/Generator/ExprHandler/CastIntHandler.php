@@ -46,6 +46,7 @@ final class CastIntHandler implements ExprHandler
 			impurePoints: [],
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

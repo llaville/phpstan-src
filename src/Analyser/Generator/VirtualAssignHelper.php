@@ -64,6 +64,7 @@ final class VirtualAssignHelper
 					impurePoints: [],
 					specifiedTruthyTypes: new SpecifiedTypes(),
 					specifiedFalseyTypes: new SpecifiedTypes(),
+					specifiedNullTypes: new SpecifiedTypes(),
 				);
 			},
 			false,

@@ -158,6 +158,7 @@ final class AssignHandler implements ExprHandler
 					impurePoints: array_merge($impurePoints, $result->impurePoints),
 					specifiedTruthyTypes: new SpecifiedTypes(),
 					specifiedFalseyTypes: new SpecifiedTypes(),
+					specifiedNullTypes: new SpecifiedTypes(),
 				);
 			},
 			true,
@@ -189,6 +190,7 @@ final class AssignHandler implements ExprHandler
 			impurePoints: $result->impurePoints,
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 
@@ -332,6 +334,7 @@ final class AssignHandler implements ExprHandler
 				impurePoints: $impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		} elseif ($var instanceof ArrayDimFetch) {
 			$dimFetchStack = [];
@@ -544,6 +547,7 @@ final class AssignHandler implements ExprHandler
 				impurePoints: $impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		} elseif ($var instanceof PropertyFetch) {
 			$objectResult = yield new ExprAnalysisRequest($stmt, $var->var, $scope, $context, $alternativeNodeCallback);
@@ -661,6 +665,7 @@ final class AssignHandler implements ExprHandler
 				impurePoints: $impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		} elseif ($var instanceof Expr\StaticPropertyFetch) {
 			if ($var->class instanceof Node\Name) {
@@ -753,6 +758,7 @@ final class AssignHandler implements ExprHandler
 				impurePoints: $impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		} elseif ($var instanceof List_) {
 			$exprGen = $processExprCallback($scope);
@@ -813,6 +819,7 @@ final class AssignHandler implements ExprHandler
 							impurePoints: [],
 							specifiedTruthyTypes: new SpecifiedTypes(),
 							specifiedFalseyTypes: new SpecifiedTypes(),
+							specifiedNullTypes: new SpecifiedTypes(),
 						);
 					},
 					$enterExpressionAssign,
@@ -836,6 +843,7 @@ final class AssignHandler implements ExprHandler
 				impurePoints: $impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		} elseif ($var instanceof ExistingArrayDimFetch) {
 			$dimFetchStack = [];
@@ -940,6 +948,7 @@ final class AssignHandler implements ExprHandler
 				impurePoints: $impurePoints,
 				specifiedTruthyTypes: new SpecifiedTypes(),
 				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		}
 
@@ -957,6 +966,7 @@ final class AssignHandler implements ExprHandler
 			impurePoints: $result->impurePoints,
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

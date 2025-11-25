@@ -11,6 +11,7 @@ use PHPStan\Analyser\Generator\ExprAnalysisResult;
 use PHPStan\Analyser\Generator\ExprHandler;
 use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\Generator\SpecifiedTypesHelper;
+use PHPStan\Analyser\SpecifiedTypes;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\ShouldNotHappenException;
 use PHPStan\Type\ErrorType;
@@ -59,6 +60,7 @@ final class VariableHandler implements ExprHandler
 				impurePoints: [],
 				specifiedTruthyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedTruthyTypes($expr),
 				specifiedFalseyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedFalseyTypes($expr),
+				specifiedNullTypes: new SpecifiedTypes(),
 			);
 		}
 
@@ -73,6 +75,7 @@ final class VariableHandler implements ExprHandler
 			impurePoints: [],
 			specifiedTruthyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedTruthyTypes($expr),
 			specifiedFalseyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedFalseyTypes($expr),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

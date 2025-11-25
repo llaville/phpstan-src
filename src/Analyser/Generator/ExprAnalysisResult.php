@@ -25,6 +25,7 @@ final class ExprAnalysisResult
 		public readonly array $impurePoints,
 		public readonly SpecifiedTypes $specifiedTruthyTypes,
 		public readonly SpecifiedTypes $specifiedFalseyTypes,
+		public readonly SpecifiedTypes $specifiedNullTypes,
 		?Type $keepVoidType = null,
 	)
 	{

@@ -74,6 +74,7 @@ final class ArrowFunctionHandler implements ExprHandler
 			impurePoints: [],
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 
@@ -115,6 +116,7 @@ final class ArrowFunctionHandler implements ExprHandler
 			impurePoints: $exprResult->impurePoints,
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

@@ -273,6 +273,7 @@ final class StaticCallHandler implements ExprHandler
 			impurePoints: array_merge($impurePoints, $argsResult->impurePoints),
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 
@@ -404,6 +405,7 @@ final class StaticCallHandler implements ExprHandler
 			impurePoints: array_merge($impurePoints, $argsResult->impurePoints),
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

@@ -46,6 +46,7 @@ final class ScalarStringHandler implements ExprHandler
 			impurePoints: [],
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

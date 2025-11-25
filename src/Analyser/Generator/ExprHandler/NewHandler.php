@@ -206,6 +206,7 @@ final class NewHandler implements ExprHandler
 			isAlwaysTerminating: $isAlwaysTerminating || $argsResult->isAlwaysTerminating,
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 
@@ -307,6 +308,7 @@ final class NewHandler implements ExprHandler
 			isAlwaysTerminating: $argsResult->isAlwaysTerminating,
 			specifiedTruthyTypes: new SpecifiedTypes(),
 			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
 

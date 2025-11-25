@@ -103,11 +103,9 @@ final class ExpressionHandler implements StmtHandler
 			yield new NodeCallbackRequest(new NoopExpressionNode($stmt->expr, $hasAssign), $scope, $alternativeNodeCallback);
 		}
 		$scope = $result->scope;
-		/*$scope = $scope->filterBySpecifiedTypes($this->typeSpecifier->specifyTypesInCondition(
-			$scope,
-			$stmt->expr,
-			TypeSpecifierContext::createNull(),
-		));*/
+		$applyTypesGen = $scope->applySpecifiedTypes($result->specifiedNullTypes);
+		yield from $applyTypesGen;
+		$scope = $applyTypesGen->getReturn();
 
 		$earlyTerminationExprGen = $this->findEarlyTerminatingExpr($stmt->expr, $scope);
 		yield from $earlyTerminationExprGen;
