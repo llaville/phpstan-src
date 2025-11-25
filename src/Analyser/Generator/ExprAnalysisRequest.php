@@ -33,4 +33,9 @@ final class ExprAnalysisRequest
 		$this->originLine = $trace[0]['line'] ?? null;
 	}
 
+	public static function createNoopRequest(Expr $expr, GeneratorScope $scope): self
+	{
+		return new ExprAnalysisRequest(new Node\Stmt\Expression($expr), $expr, $scope, ExpressionContext::createTopLevel(), new NoopNodeCallback());
+	}
+
 }

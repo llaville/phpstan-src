@@ -25,7 +25,6 @@ use PhpParser\Node\Stmt\Function_;
 use PhpParser\NodeFinder;
 use PHPStan\Analyser\ConditionalExpressionHolder;
 use PHPStan\Analyser\ConstantResolver;
-use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\ExpressionTypeHolder;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
@@ -237,7 +236,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	}
 
 	/**
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, GeneratorScope>
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
 	 */
 	public function assignVariable(string $variableName, Type $type, Type $nativeType, TrinaryLogic $certainty): Generator
 	{
@@ -306,7 +305,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	}
 
 	/**
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, GeneratorScope>
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
 	 */
 	public function assignExpression(Expr $expr, Type $type, Type $nativeType): Generator
 	{
@@ -326,7 +325,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	}
 
 	/**
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, GeneratorScope>
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
 	 */
 	private function specifyExpressionType(Expr $expr, Type $type, Type $nativeType, TrinaryLogic $certainty): Generator
 	{
@@ -1621,7 +1620,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 
 	/**
 	 * @param ParameterReflection[]|null $callableParameters
-	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, GeneratorScope>
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
 	 */
 	public function enterArrowFunctionWithoutReflection(Expr\ArrowFunction $arrowFunction, ?array $callableParameters): Generator
 	{
@@ -2425,7 +2424,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	{
 		return TypeUtils::resolveLateResolvableTypes(
 			Fiber::suspend(
-				new ExprAnalysisRequest(new Node\Stmt\Expression($node), $node, $this, ExpressionContext::createTopLevel(), new NoopNodeCallback()),
+				ExprAnalysisRequest::createNoopRequest($node, $this),
 			)->type,
 		);
 	}
@@ -2435,7 +2434,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	{
 		return TypeUtils::resolveLateResolvableTypes(
 			Fiber::suspend(
-				new ExprAnalysisRequest(new Node\Stmt\Expression($expr), $expr, $this, ExpressionContext::createTopLevel(), new NoopNodeCallback()),
+				ExprAnalysisRequest::createNoopRequest($expr, $this),
 			)->nativeType,
 		);
 	}
@@ -2475,7 +2474,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	{
 		return TypeUtils::resolveLateResolvableTypes(
 			Fiber::suspend(
-				new ExprAnalysisRequest(new Node\Stmt\Expression($node), $node, $this, ExpressionContext::createTopLevel(), new NoopNodeCallback()),
+				ExprAnalysisRequest::createNoopRequest($node, $this),
 			)->keepVoidType,
 		);
 	}
@@ -2835,12 +2834,12 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 				$expr = $issetExpr->getExpr();
 
 				if ($typeSpecification['sure']) {
-					$scope = $scope->setExpressionCertainty(
+					$scope = $scope->setExpressionCertaintyInternal(
 						$expr,
 						TrinaryLogic::createMaybe(),
 					);
 				} else {
-					$scope = $scope->unsetExpression($expr);
+					$scope = $scope->unsetExpressionInternal($expr);
 				}
 
 				continue;
@@ -2850,10 +2849,10 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 				if ($specifiedTypes->shouldOverwrite()) {
 					$scope = $scope->assignExpressionInternal($expr, $type, $type);
 				} else {
-					$scope = $scope->addTypeToExpression($expr, $type);
+					$scope = $scope->addTypeToExpressionInternal($expr, $type);
 				}
 			} else {
-				$scope = $scope->removeTypeFromExpression($expr, $type);
+				$scope = $scope->removeTypeFromExpressionInternal($expr, $type);
 			}
 			$specifiedExpressions[$this->getNodeKey($expr)] = ExpressionTypeHolder::createYes($expr, $scope->getType($expr));
 		}
@@ -2912,7 +2911,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	/**
 	 * @deprecated
 	 */
-	private function addTypeToExpression(Expr $expr, Type $type): self
+	private function addTypeToExpressionInternal(Expr $expr, Type $type): self
 	{
 		$originalExprType = $this->getType($expr);
 		$nativeType = $this->getNativeType($expr);
@@ -2937,7 +2936,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	/**
 	 * @deprecated
 	 */
-	private function removeTypeFromExpression(Expr $expr, Type $typeToRemove): self
+	private function removeTypeFromExpressionInternal(Expr $expr, Type $typeToRemove): self
 	{
 		$exprType = $this->getType($expr);
 		if (
@@ -2957,7 +2956,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	/**
 	 * @deprecated
 	 */
-	private function setExpressionCertainty(Expr $expr, TrinaryLogic $certainty): self
+	private function setExpressionCertaintyInternal(Expr $expr, TrinaryLogic $certainty): self
 	{
 		if ($this->hasExpressionType($expr)->no()) {
 			throw new ShouldNotHappenException();
@@ -3076,7 +3075,7 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	/**
 	 * @deprecated
 	 */
-	private function unsetExpression(Expr $expr): self
+	private function unsetExpressionInternal(Expr $expr): self
 	{
 		$scope = $this;
 		if ($expr instanceof Expr\ArrayDimFetch && $expr->dim !== null) {
@@ -3112,6 +3111,266 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 		}
 
 		return $scope->invalidateExpression($expr);
+	}
+
+	/**
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
+	 */
+	public function applySpecifiedTypes(SpecifiedTypes $specifiedTypes): Generator
+	{
+		$typeSpecifications = [];
+		foreach ($specifiedTypes->getSureTypes() as $exprString => [$expr, $type]) {
+			if ($expr instanceof Node\Scalar || $expr instanceof Array_ || $expr instanceof Expr\UnaryMinus && $expr->expr instanceof Node\Scalar) {
+				continue;
+			}
+			$typeSpecifications[] = [
+				'sure' => true,
+				'exprString' => (string) $exprString,
+				'expr' => $expr,
+				'type' => $type,
+			];
+		}
+		foreach ($specifiedTypes->getSureNotTypes() as $exprString => [$expr, $type]) {
+			if ($expr instanceof Node\Scalar || $expr instanceof Array_ || $expr instanceof Expr\UnaryMinus && $expr->expr instanceof Node\Scalar) {
+				continue;
+			}
+			$typeSpecifications[] = [
+				'sure' => false,
+				'exprString' => (string) $exprString,
+				'expr' => $expr,
+				'type' => $type,
+			];
+		}
+
+		usort($typeSpecifications, static function (array $a, array $b): int {
+			$length = strlen($a['exprString']) - strlen($b['exprString']);
+			if ($length !== 0) {
+				return $length;
+			}
+
+			return $b['sure'] - $a['sure']; // @phpstan-ignore minus.leftNonNumeric, minus.rightNonNumeric
+		});
+
+		$scope = $this;
+		$specifiedExpressions = [];
+		foreach ($typeSpecifications as $typeSpecification) {
+			$expr = $typeSpecification['expr'];
+			$type = $typeSpecification['type'];
+
+			if ($expr instanceof IssetExpr) {
+				$issetExpr = $expr;
+				$expr = $issetExpr->getExpr();
+
+				if ($typeSpecification['sure']) {
+					$gen = $scope->setExpressionCertainty(
+						$expr,
+						TrinaryLogic::createMaybe(),
+					);
+					yield from $gen;
+					$scope = $gen->getReturn();
+				} else {
+					$gen = $scope->unsetExpression($expr);
+					yield from $gen;
+					$scope = $gen->getReturn();
+				}
+
+				continue;
+			}
+
+			if ($typeSpecification['sure']) {
+				if ($specifiedTypes->shouldOverwrite()) {
+					$gen = $scope->assignExpression($expr, $type, $type);
+					yield from $gen;
+					$scope = $gen->getReturn();
+				} else {
+					$gen = $scope->addTypeToExpression($expr, $type);
+					yield from $gen;
+					$scope = $gen->getReturn();
+				}
+			} else {
+				$gen = $scope->removeTypeFromExpression($expr, $type);
+				yield from $gen;
+				$scope = $gen->getReturn();
+			}
+
+			$exprType = (yield ExprAnalysisRequest::createNoopRequest($expr, $scope))->type;
+			$specifiedExpressions[$this->getNodeKey($expr)] = ExpressionTypeHolder::createYes($expr, $exprType);
+		}
+
+		$conditions = [];
+		foreach ($scope->conditionalExpressions as $conditionalExprString => $conditionalExpressions) {
+			foreach ($conditionalExpressions as $conditionalExpression) {
+				foreach ($conditionalExpression->getConditionExpressionTypeHolders() as $holderExprString => $conditionalTypeHolder) {
+					if (!array_key_exists($holderExprString, $specifiedExpressions) || !$specifiedExpressions[$holderExprString]->equals($conditionalTypeHolder)) {
+						continue 2;
+					}
+				}
+
+				$conditions[$conditionalExprString][] = $conditionalExpression;
+				$specifiedExpressions[$conditionalExprString] = $conditionalExpression->getTypeHolder();
+			}
+		}
+
+		foreach ($conditions as $conditionalExprString => $expressions) {
+			$certainty = TrinaryLogic::lazyExtremeIdentity($expressions, static fn (ConditionalExpressionHolder $holder) => $holder->getTypeHolder()->getCertainty());
+			if ($certainty->no()) {
+				unset($scope->expressionTypes[$conditionalExprString]);
+			} else {
+				$type = TypeCombinator::intersect(...array_map(static fn (ConditionalExpressionHolder $holder) => $holder->getTypeHolder()->getType(), $expressions));
+
+				$scope->expressionTypes[$conditionalExprString] = array_key_exists($conditionalExprString, $scope->expressionTypes)
+					? new ExpressionTypeHolder(
+						$scope->expressionTypes[$conditionalExprString]->getExpr(),
+						TypeCombinator::intersect($scope->expressionTypes[$conditionalExprString]->getType(), $type),
+						TrinaryLogic::maxMin($scope->expressionTypes[$conditionalExprString]->getCertainty(), $certainty),
+					)
+					: $expressions[0]->getTypeHolder();
+			}
+		}
+
+		return $scope->scopeFactory->create(
+			$scope->context,
+			$scope->isDeclareStrictTypes(),
+			$scope->getFunction(),
+			$scope->getNamespace(),
+			$scope->expressionTypes,
+			$scope->nativeExpressionTypes,
+			array_merge($specifiedTypes->getNewConditionalExpressionHolders(), $scope->conditionalExpressions),
+			$scope->inClosureBindScopeClasses,
+			$scope->anonymousFunctionReflection,
+			$scope->inFirstLevelStatement,
+			$scope->currentlyAssignedExpressions,
+			$scope->currentlyAllowedUndefinedExpressions,
+			$scope->inFunctionCallsStack,
+			$scope->afterExtractCall,
+			$scope->parentScope,
+			$scope->nativeTypesPromoted,
+		);
+	}
+
+	/**
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
+	 */
+	private function setExpressionCertainty(Expr $expr, TrinaryLogic $certainty): Generator
+	{
+		if ($this->hasExpressionType($expr)->no()) {
+			throw new ShouldNotHappenException();
+		}
+
+		$exprResult = (yield ExprAnalysisRequest::createNoopRequest($expr, $this));
+		$gen = $this->specifyExpressionType(
+			$expr,
+			$exprResult->type,
+			$exprResult->nativeType,
+			$certainty,
+		);
+		yield from $gen;
+		return $gen->getReturn();
+	}
+
+	/**
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
+	 */
+	private function unsetExpression(Expr $expr): Generator
+	{
+		$scope = $this;
+		if ($expr instanceof Expr\ArrayDimFetch && $expr->dim !== null) {
+			$exprVarResult = (yield ExprAnalysisRequest::createNoopRequest($expr->var, $scope));
+			$exprVarType = $exprVarResult->type;
+
+			$dimResult = (yield ExprAnalysisRequest::createNoopRequest($expr->dim, $scope));
+			$dimType = $dimResult->type;
+			$unsetType = $exprVarType->unsetOffset($dimType);
+			$exprVarNativeType = $exprVarResult->nativeType;
+			$dimNativeType = $dimResult->nativeType;
+			$unsetNativeType = $exprVarNativeType->unsetOffset($dimNativeType);
+
+			$assignExprGen = $scope->assignExpression($expr->var, $unsetType, $unsetNativeType);
+			yield from $assignExprGen;
+			$scope = $assignExprGen->getReturn()->invalidateExpression(
+				new FuncCall(new FullyQualified('count'), [new Arg($expr->var)]),
+			)->invalidateExpression(
+				new FuncCall(new FullyQualified('sizeof'), [new Arg($expr->var)]),
+			)->invalidateExpression(
+				new FuncCall(new Name('count'), [new Arg($expr->var)]),
+			)->invalidateExpression(
+				new FuncCall(new Name('sizeof'), [new Arg($expr->var)]),
+			);
+
+			if ($expr->var instanceof Expr\ArrayDimFetch && $expr->var->dim !== null) {
+				$exprVarVarResult = (yield ExprAnalysisRequest::createNoopRequest($expr->var->var, $scope));
+				$exprVarDimResult = (yield ExprAnalysisRequest::createNoopRequest($expr->var->dim, $scope));
+				$assignExprGen = $scope->assignExpression(
+					$expr->var->var,
+					$exprVarVarResult->type->setOffsetValueType(
+						$exprVarDimResult->type,
+						$exprVarType,
+					),
+					$exprVarVarResult->nativeType->setOffsetValueType(
+						$exprVarDimResult->nativeType,
+						$exprVarNativeType,
+					),
+				);
+				yield from $assignExprGen;
+				$scope = $assignExprGen->getReturn();
+			}
+		}
+
+		return $scope->invalidateExpression($expr);
+	}
+
+	/**
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
+	 */
+	private function addTypeToExpression(Expr $expr, Type $type): Generator
+	{
+		$exprResult = yield ExprAnalysisRequest::createNoopRequest($expr, $this);
+		$originalExprType = $exprResult->type;
+		$nativeType = $exprResult->nativeType;
+
+		if ($originalExprType->equals($nativeType)) {
+			$newType = TypeCombinator::intersect($type, $originalExprType);
+			if ($newType->isConstantScalarValue()->yes() && $newType->equals($originalExprType)) {
+				// don't add the same type over and over again to improve performance
+				return $this;
+			}
+			$gen = $this->specifyExpressionType($expr, $newType, $newType, TrinaryLogic::createYes());
+			yield from $gen;
+			return $gen->getReturn();
+		}
+
+		$gen = $this->specifyExpressionType(
+			$expr,
+			TypeCombinator::intersect($type, $originalExprType),
+			TypeCombinator::intersect($type, $nativeType),
+			TrinaryLogic::createYes(),
+		);
+		yield from $gen;
+		return $gen->getReturn();
+	}
+
+	/**
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, self>
+	 */
+	private function removeTypeFromExpression(Expr $expr, Type $typeToRemove): Generator
+	{
+		$exprResult = yield ExprAnalysisRequest::createNoopRequest($expr, $this);
+		$exprType = $exprResult->type;
+		if (
+			$exprType instanceof NeverType ||
+			$typeToRemove instanceof NeverType
+		) {
+			return $this;
+		}
+		$gen = $this->specifyExpressionType(
+			$expr,
+			TypeCombinator::remove($exprType, $typeToRemove),
+			TypeCombinator::remove($exprResult->nativeType, $typeToRemove),
+			TrinaryLogic::createYes(),
+		);
+		yield from $gen;
+
+		return $gen->getReturn();
 	}
 
 	/** @api */

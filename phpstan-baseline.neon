@@ -21,7 +21,7 @@ parameters:
 		-
 			rawMessage: Casting to string something that's already string.
 			identifier: cast.useless
-			count: 2
+			count: 4
 			path: src/Analyser/Generator/GeneratorScope.php
 
 		-

@@ -155,6 +155,16 @@ class FooWithStaticMethods
 		assertType('1', $s::genericStatic(1));
 	}
 
+	public function doIf(int $i): void {
+		if ($i) {
+			assertType('int<min, -1>|int<1, max>', $i);
+		} else {
+			assertType('0', $i);
+		}
+
+		assertType('int', $i);
+	}
+
 }
 
 class ClosureFromCallableExtension

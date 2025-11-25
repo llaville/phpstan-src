@@ -10,7 +10,7 @@ use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\Generator\ExprAnalysisResult;
 use PHPStan\Analyser\Generator\ExprHandler;
 use PHPStan\Analyser\Generator\GeneratorScope;
-use PHPStan\Analyser\SpecifiedTypes;
+use PHPStan\Analyser\Generator\SpecifiedTypesHelper;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\ShouldNotHappenException;
 use PHPStan\Type\ErrorType;
@@ -23,6 +23,12 @@ use function is_string;
 #[AutowiredService]
 final class VariableHandler implements ExprHandler
 {
+
+	public function __construct(
+		private SpecifiedTypesHelper $specifiedTypesHelper,
+	)
+	{
+	}
 
 	public function supports(Expr $expr): bool
 	{
@@ -51,8 +57,8 @@ final class VariableHandler implements ExprHandler
 				isAlwaysTerminating: false,
 				throwPoints: [],
 				impurePoints: [],
-				specifiedTruthyTypes: new SpecifiedTypes(),
-				specifiedFalseyTypes: new SpecifiedTypes(),
+				specifiedTruthyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedTruthyTypes($expr),
+				specifiedFalseyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedFalseyTypes($expr),
 			);
 		}
 
@@ -65,8 +71,8 @@ final class VariableHandler implements ExprHandler
 			isAlwaysTerminating: false,
 			throwPoints: [],
 			impurePoints: [],
-			specifiedTruthyTypes: new SpecifiedTypes(),
-			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedTruthyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedTruthyTypes($expr),
+			specifiedFalseyTypes: $this->specifiedTypesHelper->createDefaultSpecifiedFalseyTypes($expr),
 		);
 	}
 

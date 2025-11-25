@@ -185,6 +185,7 @@ final class StmtsHandler
 	/**
 	 * @param Node\Stmt[] $nextStmts
 	 * @param (callable(Node, Scope, callable(Node, Scope): void): void)|null $alternativeNodeCallback
+	 * @return Generator<int, GeneratorTValueType, GeneratorTSendType, void>
 	 */
 	private function processUnreachableStatement(array $nextStmts, GeneratorScope $scope, ?callable $alternativeNodeCallback): Generator
 	{
