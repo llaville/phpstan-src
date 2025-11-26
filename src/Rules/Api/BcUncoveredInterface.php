@@ -3,6 +3,7 @@
 namespace PHPStan\Rules\Api;
 
 use PHPStan\Analyser\Scope;
+use PHPStan\Analyser\TypeSpecifier;
 use PHPStan\Command\Output;
 use PHPStan\Command\OutputStyle;
 use PHPStan\DependencyInjection\Container;
@@ -67,6 +68,7 @@ final class BcUncoveredInterface
 		Container::class,
 		OutputStyle::class,
 		ReturnStatementsNode::class,
+		TypeSpecifier::class,
 	];
 
 }

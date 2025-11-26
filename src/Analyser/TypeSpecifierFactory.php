@@ -24,7 +24,7 @@ final class TypeSpecifierFactory
 
 	public function create(): TypeSpecifier
 	{
-		$typeSpecifier = new TypeSpecifier(
+		$typeSpecifier = new LegacyTypeSpecifier(
 			$this->container->getByType(ExprPrinter::class),
 			$this->container->getByType(ReflectionProvider::class),
 			$this->container->getByType(PhpVersion::class),

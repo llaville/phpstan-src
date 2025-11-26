@@ -76,9 +76,9 @@ final class InArrayFunctionTypeSpecifyingExtension implements FunctionTypeSpecif
 				}
 
 				if ($isStrictComparison) {
-					$itemTypes = $this->typeSpecifier->resolveIdentical(new Identical($needleExpr, $item->value), $scope, $context);
+					$itemTypes = $this->typeSpecifier->specifyTypesInCondition($scope, new Identical($needleExpr, $item->value), $context);
 				} else {
-					$itemTypes = $this->typeSpecifier->resolveEqual(new Equal($needleExpr, $item->value), $scope, $context);
+					$itemTypes = $this->typeSpecifier->specifyTypesInCondition($scope, new Equal($needleExpr, $item->value), $context);
 				}
 
 				if ($types === null) {
