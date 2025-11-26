@@ -113,13 +113,6 @@ final class LegacyTypeSpecifier implements TypeSpecifier
 		private bool $rememberPossiblyImpureFunctionValues,
 	)
 	{
-		foreach (array_merge($functionTypeSpecifyingExtensions, $methodTypeSpecifyingExtensions, $staticMethodTypeSpecifyingExtensions) as $extension) {
-			if (!($extension instanceof TypeSpecifierAwareExtension)) {
-				continue;
-			}
-
-			$extension->setTypeSpecifier($this);
-		}
 	}
 
 	public function specifyTypesInCondition(

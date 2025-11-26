@@ -24,13 +24,16 @@ final class TypeSpecifierFactory
 
 	public function create(): TypeSpecifier
 	{
+		$functionTypeSpecifying = $this->container->getServicesByTag(self::FUNCTION_TYPE_SPECIFYING_EXTENSION_TAG);
+		$methodTypeSpecifying = $this->container->getServicesByTag(self::METHOD_TYPE_SPECIFYING_EXTENSION_TAG);
+		$staticMethodTypeSpecifying = $this->container->getServicesByTag(self::STATIC_METHOD_TYPE_SPECIFYING_EXTENSION_TAG);
 		$typeSpecifier = new LegacyTypeSpecifier(
 			$this->container->getByType(ExprPrinter::class),
 			$this->container->getByType(ReflectionProvider::class),
 			$this->container->getByType(PhpVersion::class),
-			$this->container->getServicesByTag(self::FUNCTION_TYPE_SPECIFYING_EXTENSION_TAG),
-			$this->container->getServicesByTag(self::METHOD_TYPE_SPECIFYING_EXTENSION_TAG),
-			$this->container->getServicesByTag(self::STATIC_METHOD_TYPE_SPECIFYING_EXTENSION_TAG),
+			$functionTypeSpecifying,
+			$methodTypeSpecifying,
+			$staticMethodTypeSpecifying,
 			$this->container->getParameter('rememberPossiblyImpureFunctionValues'),
 		);
 
@@ -40,6 +43,9 @@ final class TypeSpecifierFactory
 			$this->container->getServicesByTag(BrokerFactory::DYNAMIC_METHOD_RETURN_TYPE_EXTENSION_TAG),
 			$this->container->getServicesByTag(BrokerFactory::DYNAMIC_STATIC_METHOD_RETURN_TYPE_EXTENSION_TAG),
 			$this->container->getServicesByTag(BrokerFactory::DYNAMIC_FUNCTION_RETURN_TYPE_EXTENSION_TAG),
+			$functionTypeSpecifying,
+			$methodTypeSpecifying,
+			$staticMethodTypeSpecifying,
 		) as $extension) {
 			if (!($extension instanceof TypeSpecifierAwareExtension)) {
 				continue;
