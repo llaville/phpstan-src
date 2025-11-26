@@ -34,7 +34,7 @@ final class SpecifiedTypesHelper
 		return $this->create($expr, $type, TypeSpecifierContext::createFalse())->setRootExpr($expr);
 	}
 
-	private function create(
+	public function create(
 		Expr $expr,
 		Type $type,
 		TypeSpecifierContext $context,
