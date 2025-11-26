@@ -26,9 +26,9 @@ final class NamespaceHandler implements StmtHandler
 
 	public function analyseStmt(Stmt $stmt, GeneratorScope $scope, StatementContext $context, ?callable $alternativeNodeCallback): Generator
 	{
-		/*if ($stmt->name !== null) {
+		if ($stmt->name !== null) {
 			$scope = $scope->enterNamespace($stmt->name->toString());
-		}*/
+		}
 
 		$result = yield new StmtsAnalysisRequest($stmt, $stmt->stmts, $scope, $context, $alternativeNodeCallback);
 
