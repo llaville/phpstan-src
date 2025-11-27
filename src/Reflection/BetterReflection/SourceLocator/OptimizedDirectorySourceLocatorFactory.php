@@ -52,6 +52,15 @@ final class OptimizedDirectorySourceLocatorFactory
 		}
 
 		$cacheKey = sprintf('odsl-%s', $directory);
+		return $this->createCachedDirectorySourceLocator($fileHashes, $cacheKey);
+	}
+
+	/**
+	 * @param array<string, string> $fileHashes
+	 * @param non-empty-string $cacheKey
+	 */
+	private function createCachedDirectorySourceLocator(array $fileHashes, string $cacheKey): OptimizedDirectorySourceLocator
+	{
 		$variableCacheKey = 'v1';
 
 		/** @var array<string, array{string, string[], string[], string[]}>|null $cached */
@@ -93,23 +102,20 @@ final class OptimizedDirectorySourceLocatorFactory
 
 	/**
 	 * @param string[] $files
+	 * @param non-empty-string&literal-string $uniqueCacheIdentifier
 	 */
-	public function createByFiles(array $files): OptimizedDirectorySourceLocator
+	public function createByFiles(array $files, string $uniqueCacheIdentifier): OptimizedDirectorySourceLocator
 	{
-		$symbols = [];
+		$fileHashes = [];
 		foreach ($files as $file) {
-			[$newClasses, $newFunctions, $newConstants] = $this->findSymbols($file);
-			$symbols[$file] = ['', $newClasses, $newFunctions, $newConstants];
+			$hash = sha1_file($file);
+			if ($hash === false) {
+				continue;
+			}
+			$fileHashes[$file] = $hash;
 		}
 
-		[$classToFile, $functionToFiles, $constantToFile] = $this->changeStructure($symbols);
-
-		return new OptimizedDirectorySourceLocator(
-			$this->fileNodesFetcher,
-			$classToFile,
-			$functionToFiles,
-			$constantToFile,
-		);
+		return $this->createCachedDirectorySourceLocator($fileHashes, $uniqueCacheIdentifier);
 	}
 
 	/**
