@@ -2422,21 +2422,17 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 	/** @api */
 	public function getType(Expr $node): Type
 	{
-		return TypeUtils::resolveLateResolvableTypes(
-			Fiber::suspend(
-				ExprAnalysisRequest::createNoopRequest($node, $this),
-			)->type,
-		);
+		return Fiber::suspend(
+			ExprAnalysisRequest::createNoopRequest($node, $this),
+		)->type;
 	}
 
 	/** @api */
 	public function getNativeType(Expr $expr): Type
 	{
-		return TypeUtils::resolveLateResolvableTypes(
-			Fiber::suspend(
-				ExprAnalysisRequest::createNoopRequest($expr, $this),
-			)->nativeType,
-		);
+		return Fiber::suspend(
+			ExprAnalysisRequest::createNoopRequest($expr, $this),
+		)->nativeType;
 	}
 
 	public function doNotTreatPhpDocTypesAsCertain(): Scope
@@ -2472,11 +2468,9 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 
 	public function getKeepVoidType(Expr $node): Type
 	{
-		return TypeUtils::resolveLateResolvableTypes(
-			Fiber::suspend(
-				ExprAnalysisRequest::createNoopRequest($node, $this),
-			)->keepVoidType,
-		);
+		return Fiber::suspend(
+			ExprAnalysisRequest::createNoopRequest($node, $this),
+		)->keepVoidType;
 	}
 
 	/**
