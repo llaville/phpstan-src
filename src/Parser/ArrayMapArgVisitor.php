@@ -6,6 +6,7 @@ use Override;
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 use PHPStan\DependencyInjection\AutowiredService;
+use function array_slice;
 use function count;
 
 #[AutowiredService]
@@ -17,60 +18,30 @@ final class ArrayMapArgVisitor extends NodeVisitorAbstract
 	#[Override]
 	public function enterNode(Node $node): ?Node
 	{
-		if (!$this->isArrayMapCall($node)) {
-			return null;
-		}
+		if ($node instanceof Node\Expr\FuncCall && $node->name instanceof Node\Name && !$node->isFirstClassCallable()) {
+			$functionName = $node->name->toLowerString();
+			if ($functionName === 'array_map') {
+				$args = $node->getArgs();
+				$arrayArgs = [];
+				foreach ($args as $i => $arg) {
+					if ($arg->name === null && $i === 0) {
+						continue;
+					}
+					if ($arg->name !== null && $arg->name->toString() === 'callback') {
+						continue;
+					}
 
-		$args = $node->getArgs();
-		if (count($args) < 2) {
-			return null;
-		}
-
-		$callbackArg = null;
-		$arrayArgs = [];
-		foreach ($args as $i => $arg) {
-			if ($callbackArg === null) {
-				if ($arg->name === null && $i === 0) {
-					$callbackArg = $arg;
-					continue;
+					$arrayArgs[] = $arg;
 				}
-				if ($arg->name !== null && $arg->name->toString() === 'callback') {
-					$callbackArg = $arg;
-					continue;
+				if (isset($args[0])) {
+					$slicedArgs = array_slice($args, 1);
+					if (count($slicedArgs) > 0) {
+						$args[0]->value->setAttribute(self::ATTRIBUTE_NAME, $arrayArgs);
+					}
 				}
 			}
-
-			$arrayArgs[] = $arg;
 		}
-
-		if ($callbackArg !== null) {
-			$callbackArg->value->setAttribute(self::ATTRIBUTE_NAME, $arrayArgs);
-			return new Node\Expr\FuncCall(
-				$node->name,
-				[$callbackArg, ...$arrayArgs],
-				$node->getAttributes(),
-			);
-		}
-
 		return null;
-	}
-
-	/**
-	 * @phpstan-assert-if-true Node\Expr\FuncCall $node
-	 */
-	private function isArrayMapCall(Node $node): bool
-	{
-		if (!$node instanceof Node\Expr\FuncCall) {
-			return false;
-		}
-		if (!$node->name instanceof Node\Name) {
-			return false;
-		}
-		if ($node->isFirstClassCallable()) {
-			return false;
-		}
-
-		return $node->name->toLowerString() === 'array_map';
 	}
 
 }
