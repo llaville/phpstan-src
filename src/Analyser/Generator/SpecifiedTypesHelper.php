@@ -3,12 +3,14 @@
 namespace PHPStan\Analyser\Generator;
 
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\Instanceof_;
 use PHPStan\Analyser\SpecifiedTypes;
 use PHPStan\Analyser\TypeSpecifierContext;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\Node\Expr\AlwaysRememberedExpr;
 use PHPStan\Node\Printer\ExprPrinter;
+use PHPStan\Type\ConstantScalarType;
 use PHPStan\Type\StaticTypeFactory;
 use PHPStan\Type\Type;
 
@@ -80,6 +82,36 @@ final class SpecifiedTypesHelper
 		}
 
 		return new SpecifiedTypes($sureTypes, $sureNotTypes);
+	}
+
+	/**
+	 * @return array{Expr, ConstantScalarType, Type}|null
+	 */
+	public function findTypeExpressionsFromBinaryOperation(Type $leftType, Type $rightType, Expr\BinaryOp $binaryOperation): ?array
+	{
+		$rightExpr = $binaryOperation->right;
+		if ($rightExpr instanceof AlwaysRememberedExpr) {
+			$rightExpr = $rightExpr->getExpr();
+		}
+
+		$leftExpr = $binaryOperation->left;
+		if ($leftExpr instanceof AlwaysRememberedExpr) {
+			$leftExpr = $leftExpr->getExpr();
+		}
+
+		if (
+			$leftType instanceof ConstantScalarType
+			&& !$rightExpr instanceof ConstFetch
+		) {
+			return [$binaryOperation->right, $leftType, $rightType];
+		} elseif (
+			$rightType instanceof ConstantScalarType
+			&& !$leftExpr instanceof ConstFetch
+		) {
+			return [$binaryOperation->left, $rightType, $leftType];
+		}
+
+		return null;
 	}
 
 }

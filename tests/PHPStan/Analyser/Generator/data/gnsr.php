@@ -468,10 +468,90 @@ class MagicConstUser {
 	function doFoo(): void {
 		assertType('literal-string&non-falsy-string', __DIR__);
 		assertType('literal-string&non-falsy-string', __FILE__);
-		assertType('470', __LINE__);
+		assertType('471', __LINE__);
 	}
 }
 
 function (): void {
 	assertType('int<50207, 80599>', PHP_VERSION_ID);
+};
+
+function (int $i) {
+	if ($i == null) {
+		assertType('0', $i);
+	} else {
+		assertType('int<min, -1>|int<1, max>', $i);
+	}
+
+	assertType('int', $i);
+};
+
+function (int $i) {
+	if ($i == false) {
+		assertType('0', $i);
+	} else {
+		assertType('int<min, -1>|int<1, max>', $i);
+	}
+
+	assertType('int', $i);
+};
+
+function (int $i) {
+	if (false == $i) {
+		assertType('0', $i);
+	} else {
+		assertType('int<min, -1>|int<1, max>', $i);
+	}
+
+	assertType('int', $i);
+};
+
+function (int $i) {
+	if ($i == true) {
+		assertType('int<min, -1>|int<1, max>', $i);
+	} else {
+		assertType('0', $i);
+	}
+
+	assertType('int', $i);
+};
+
+function (int $i) {
+	if (true == $i) {
+		assertType('int<min, -1>|int<1, max>', $i);
+	} else {
+		assertType('0', $i);
+	}
+
+	assertType('int', $i);
+};
+
+function (mixed $m) {
+	if ($m == 0) {
+		assertType('0|0.0|string|false|null', $m);
+	} else {
+		assertType("mixed~(0|0.0|'0'|false|null)", $m);
+	}
+
+	assertType('mixed', $m);
+};
+
+function (mixed $m) {
+	if ($m == '') {
+		assertType("0|0.0|''|false|null", $m);
+	} else {
+		assertType("mixed~(''|false|null)", $m);
+	}
+
+	assertType('mixed', $m);
+};
+
+function (array $a): void {
+	if ($a == []) {
+		assertType("array{}", $a);
+	} else {
+		assertType("non-empty-array", $a);
+	}
+
+	assertType("array", $a);
 };
