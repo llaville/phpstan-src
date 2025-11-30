@@ -33,8 +33,8 @@ final class BinaryShiftRightHandler implements ExprHandler
 
 	public function analyseExpr(Stmt $stmt, Expr $expr, GeneratorScope $scope, ExpressionContext $context, ?callable $alternativeNodeCallback): Generator
 	{
-		$leftResult = yield new ExprAnalysisRequest($stmt, $expr->left, $scope, $context, $alternativeNodeCallback);
-		$rightResult = yield new ExprAnalysisRequest($stmt, $expr->right, $leftResult->scope, $context, $alternativeNodeCallback);
+		$leftResult = yield new ExprAnalysisRequest($stmt, $expr->left, $scope, $context->enterDeep(), $alternativeNodeCallback);
+		$rightResult = yield new ExprAnalysisRequest($stmt, $expr->right, $leftResult->scope, $context->enterDeep(), $alternativeNodeCallback);
 
 		return new ExprAnalysisResult(
 			$this->initializerExprTypeResolver->getShiftRightTypeFromTypes($expr->left, $expr->right, $leftResult->type, $rightResult->type),
