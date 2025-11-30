@@ -8,6 +8,7 @@ use Closure;
 use DivisionByZeroError;
 use function PHPStan\Testing\assertNativeType;
 use function PHPStan\Testing\assertType;
+use const PHP_VERSION_ID;
 
 class Foo
 {
@@ -470,3 +471,7 @@ class MagicConstUser {
 		assertType('470', __LINE__);
 	}
 }
+
+function (): void {
+	assertType('int<50207, 80599>', PHP_VERSION_ID);
+};
