@@ -2522,7 +2522,19 @@ final class InitializerExprTypeResolver
 	 */
 	public function getUnaryMinusType(Expr $expr, callable $getTypeCallback): Type
 	{
-		$type = $getTypeCallback($expr)->toNumber();
+		$type = $getTypeCallback($expr);
+
+		$type = $this->getUnaryMinusTypeFromType($expr, $type);
+		if ($type instanceof IntegerRangeType) {
+			return $getTypeCallback(new Expr\BinaryOp\Mul($expr, new Int_(-1)));
+		}
+
+		return $type;
+	}
+
+	public function getUnaryMinusTypeFromType(Expr $expr, Type $type): Type
+	{
+		$type = $type->toNumber();
 		$scalarValues = $type->getConstantScalarValues();
 
 		if (count($scalarValues) > 0) {
@@ -2541,10 +2553,6 @@ final class InitializerExprTypeResolver
 			}
 
 			return TypeCombinator::union(...$newTypes);
-		}
-
-		if ($type instanceof IntegerRangeType) {
-			return $getTypeCallback(new Expr\BinaryOp\Mul($expr, new Int_(-1)));
 		}
 
 		return $type;
