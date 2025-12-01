@@ -4,6 +4,9 @@ namespace PHPStan\Analyser\Generator\ExprHandler;
 
 use Generator;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\NotEqual;
+use PhpParser\Node\Scalar\Float_;
+use PhpParser\Node\Scalar\Int_ as ScalarInt;
 use PhpParser\Node\Stmt;
 use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\Generator\ExprAnalysisRequest;
@@ -35,6 +38,8 @@ final class CastDoubleHandler implements ExprHandler
 	{
 		$exprResult = yield new ExprAnalysisRequest($stmt, $expr->expr, $scope, $context->enterDeep(), $alternativeNodeCallback);
 
+		$notEqualExprResult = yield ExprAnalysisRequest::createNoopRequest(new NotEqual($expr->expr, new Float_(0)), $scope);
+
 		return new ExprAnalysisResult(
 			$exprResult->type->toFloat(),
 			$exprResult->nativeType->toFloat(),
@@ -43,8 +48,8 @@ final class CastDoubleHandler implements ExprHandler
 			isAlwaysTerminating: false,
 			throwPoints: [],
 			impurePoints: [],
-			specifiedTruthyTypes: new SpecifiedTypes(),
-			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedTruthyTypes: $notEqualExprResult->specifiedTruthyTypes->setRootExpr($expr),
+			specifiedFalseyTypes: $notEqualExprResult->specifiedFalseyTypes->setRootExpr($expr),
 			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}

@@ -4,6 +4,8 @@ namespace PHPStan\Analyser\Generator\ExprHandler;
 
 use Generator;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\NotEqual;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
 use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\Generator\ExprAnalysisRequest;
@@ -35,6 +37,8 @@ final class CastStringHandler implements ExprHandler
 	{
 		$exprResult = yield new ExprAnalysisRequest($stmt, $expr->expr, $scope, $context->enterDeep(), $alternativeNodeCallback);
 
+		$notEqualExprResult = yield ExprAnalysisRequest::createNoopRequest(new NotEqual($expr->expr, new String_('')), $scope);
+
 		return new ExprAnalysisResult(
 			$exprResult->type->toString(),
 			$exprResult->nativeType->toString(),
@@ -43,8 +47,8 @@ final class CastStringHandler implements ExprHandler
 			isAlwaysTerminating: false,
 			throwPoints: [],
 			impurePoints: [],
-			specifiedTruthyTypes: new SpecifiedTypes(),
-			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedTruthyTypes: $notEqualExprResult->specifiedTruthyTypes->setRootExpr($expr),
+			specifiedFalseyTypes: $notEqualExprResult->specifiedFalseyTypes->setRootExpr($expr),
 			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}

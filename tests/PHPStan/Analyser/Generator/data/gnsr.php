@@ -597,3 +597,43 @@ function (bool $b): void {
 	assertType('false', !true);
 	assertType('bool', !$b);
 };
+
+function (mixed $m): void {
+	if ((bool) $m) {
+		assertType("mixed~(0|0.0|''|'0'|array{}|false|null)", $m);
+	} else {
+		assertType("0|0.0|''|'0'|array{}|false|null", $m);
+	}
+
+	assertType("mixed", $m);
+};
+
+function (mixed $m): void {
+	if ((string) $m) {
+		assertType("non-empty-array", $m);
+	} else {
+		assertType("non-empty-array", $m);
+	}
+
+	assertType("mixed", $m);
+};
+
+function (mixed $m): void {
+	if ((int) $m) {
+		assertType("non-empty-array", $m);
+	} else {
+		assertType("non-empty-array", $m);
+	}
+
+	assertType("mixed", $m);
+};
+
+function (mixed $m): void {
+	if ((float) $m) {
+		assertType("non-empty-array", $m);
+	} else {
+		assertType("non-empty-array", $m);
+	}
+
+	assertType("mixed", $m);
+};

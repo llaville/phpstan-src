@@ -4,6 +4,9 @@ namespace PHPStan\Analyser\Generator\ExprHandler;
 
 use Generator;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\Equal;
+use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Stmt;
 use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\Generator\ExprAnalysisRequest;
@@ -35,6 +38,8 @@ final class CastBoolHandler implements ExprHandler
 	{
 		$exprResult = yield new ExprAnalysisRequest($stmt, $expr->expr, $scope, $context->enterDeep(), $alternativeNodeCallback);
 
+		$equalExprResult = yield ExprAnalysisRequest::createNoopRequest(new Equal($expr->expr, new ConstFetch(new FullyQualified('true'))), $scope);
+
 		return new ExprAnalysisResult(
 			$exprResult->type->toBoolean(),
 			$exprResult->nativeType->toBoolean(),
@@ -43,8 +48,8 @@ final class CastBoolHandler implements ExprHandler
 			isAlwaysTerminating: false,
 			throwPoints: [],
 			impurePoints: [],
-			specifiedTruthyTypes: new SpecifiedTypes(),
-			specifiedFalseyTypes: new SpecifiedTypes(),
+			specifiedTruthyTypes: $equalExprResult->specifiedTruthyTypes->setRootExpr($expr),
+			specifiedFalseyTypes: $equalExprResult->specifiedFalseyTypes->setRootExpr($expr),
 			specifiedNullTypes: new SpecifiedTypes(),
 		);
 	}
