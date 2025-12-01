@@ -561,3 +561,19 @@ function (array $a): void {
 
 	assertType("array", $a);
 };
+
+function (array $a): void {
+	if (!($a == [])) {
+		assertType("non-empty-array", $a);
+	} else {
+		assertType("array{}", $a);
+	}
+
+	assertType("array", $a);
+};
+
+function (bool $b): void {
+	assertType('true', !false);
+	assertType('false', !true);
+	assertType('bool', !$b);
+};
