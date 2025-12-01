@@ -271,6 +271,19 @@ class Foo
 		assertType("'1'", (string) $a);
 	}
 
+	/**
+	 * @param '1' $b
+	 */
+	function doInterpolatedString(string $b) {
+		$a = '1';
+
+		assertType("'1'", "$a");
+		assertNativeType("'1'", "$a");
+		assertType("'1'", "$b");
+		assertNativeType("string", "$b");
+	}
+
+
 }
 
 function (): void {
