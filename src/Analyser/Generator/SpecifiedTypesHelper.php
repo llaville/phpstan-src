@@ -2,17 +2,26 @@
 
 namespace PHPStan\Analyser\Generator;
 
+use Generator;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Instanceof_;
 use PHPStan\Analyser\SpecifiedTypes;
 use PHPStan\Analyser\TypeSpecifierContext;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\Node\Expr\AlwaysRememberedExpr;
 use PHPStan\Node\Printer\ExprPrinter;
+use PHPStan\ShouldNotHappenException;
+use PHPStan\TrinaryLogic;
+use PHPStan\Type\Accessory\NonEmptyArrayType;
+use PHPStan\Type\Constant\ConstantArrayTypeBuilder;
+use PHPStan\Type\Constant\ConstantIntegerType;
 use PHPStan\Type\ConstantScalarType;
+use PHPStan\Type\IntegerRangeType;
 use PHPStan\Type\StaticTypeFactory;
 use PHPStan\Type\Type;
+use PHPStan\Type\TypeCombinator;
 
 #[AutowiredService]
 final class SpecifiedTypesHelper
@@ -112,6 +121,147 @@ final class SpecifiedTypesHelper
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param FuncCall $countFuncCall
+	 * @param Type $type
+	 * @param Type $sizeType
+	 * @param TypeSpecifierContext $context
+	 * @param Expr $rootExpr
+	 * @return array{SpecifiedTypes, SpecifiedTypes}|null
+	 */
+	public function specifyTypesForCountFuncCall(
+		FuncCall $countFuncCall,
+		Type $type,
+		Type $sizeType,
+		?Type $mode,
+		Expr $rootExpr,
+	): ?array
+	{
+		if (count($countFuncCall->getArgs()) === 1) {
+			$isNormalCount = TrinaryLogic::createYes();
+		} elseif ($mode !== null) {
+			$isNormalCount = (new ConstantIntegerType(COUNT_NORMAL))->isSuperTypeOf($mode)->result->or($type->getIterableValueType()->isArray()->negate());
+		} else {
+			throw new ShouldNotHappenException();
+		}
+
+		$isConstantArray = $type->isConstantArray();
+		$isList = $type->isList();
+		$oneOrMore = IntegerRangeType::fromInterval(1, null);
+		if (
+			!$isNormalCount->yes()
+			|| (!$isConstantArray->yes() && !$isList->yes())
+			|| !$oneOrMore->isSuperTypeOf($sizeType)->yes()
+			|| $sizeType->isSuperTypeOf($type->getArraySize())->yes()
+		) {
+			return null;
+		}
+
+		$truthyResultTypes = [];
+		$falseyResultTypes = [];
+		foreach ($type->getArrays() as $arrayType) {
+			$isSizeSuperTypeOfArraySize = $sizeType->isSuperTypeOf($arrayType->getArraySize());
+			if ($isSizeSuperTypeOfArraySize->no()) {
+				continue;
+			}
+
+			if (
+				$sizeType instanceof ConstantIntegerType
+				&& $sizeType->getValue() < ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT
+				&& $isList->yes()
+				&& $arrayType->getKeyType()->isSuperTypeOf(IntegerRangeType::fromInterval(0, $sizeType->getValue() - 1))->yes()
+			) {
+				// turn optional offsets non-optional
+				$valueTypesBuilder = ConstantArrayTypeBuilder::createEmpty();
+				for ($i = 0; $i < $sizeType->getValue(); $i++) {
+					$offsetType = new ConstantIntegerType($i);
+					$valueTypesBuilder->setOffsetValueType($offsetType, $arrayType->getOffsetValueType($offsetType));
+				}
+				$array = $valueTypesBuilder->getArray();
+				$truthyResultTypes[] = $array;
+				if (!$isSizeSuperTypeOfArraySize->maybe()) {
+					$falseyResultTypes[] = $array;
+				}
+				continue;
+			}
+
+			if (
+				$sizeType instanceof IntegerRangeType
+				&& $sizeType->getMin() !== null
+				&& $sizeType->getMin() < ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT
+				&& $isList->yes()
+				&& $arrayType->getKeyType()->isSuperTypeOf(IntegerRangeType::fromInterval(0, ($sizeType->getMax() ?? $sizeType->getMin()) - 1))->yes()
+			) {
+				$builderData = [];
+				// turn optional offsets non-optional
+				for ($i = 0; $i < $sizeType->getMin(); $i++) {
+					$offsetType = new ConstantIntegerType($i);
+					$builderData[] = [$offsetType, $arrayType->getOffsetValueType($offsetType), false];
+				}
+				if ($sizeType->getMax() !== null) {
+					if ($sizeType->getMax() - $sizeType->getMin() > ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT) {
+						$truthyResultTypes[] = $arrayType;
+						if (!$isSizeSuperTypeOfArraySize->maybe()) {
+							$falseyResultTypes[] = $arrayType;
+						}
+						continue;
+					}
+					for ($i = $sizeType->getMin(); $i < $sizeType->getMax(); $i++) {
+						$offsetType = new ConstantIntegerType($i);
+						$builderData[] = [$offsetType, $arrayType->getOffsetValueType($offsetType), true];
+					}
+				} elseif ($arrayType->isConstantArray()->yes()) {
+					for ($i = $sizeType->getMin();; $i++) {
+						$offsetType = new ConstantIntegerType($i);
+						$hasOffset = $arrayType->hasOffsetValueType($offsetType);
+						if ($hasOffset->no()) {
+							break;
+						}
+						$builderData[] = [$offsetType, $arrayType->getOffsetValueType($offsetType), !$hasOffset->yes()];
+					}
+				} else {
+					$array = TypeCombinator::intersect($arrayType, new NonEmptyArrayType());
+					$truthyResultTypes[] = $array;
+					if (!$isSizeSuperTypeOfArraySize->maybe()) {
+						$falseyResultTypes[] = $array;
+					}
+					continue;
+				}
+
+				if (count($builderData) > ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT) {
+					$truthyResultTypes[] = $arrayType;
+					if (!$isSizeSuperTypeOfArraySize->maybe()) {
+						$falseyResultTypes[] = $arrayType;
+					}
+					continue;
+				}
+
+				$builder = ConstantArrayTypeBuilder::createEmpty();
+				foreach ($builderData as [$offsetType, $valueType, $optional]) {
+					$builder->setOffsetValueType($offsetType, $valueType, $optional);
+				}
+
+				$array = $builder->getArray();
+				$truthyResultTypes[] = $array;
+				if (!$isSizeSuperTypeOfArraySize->maybe()) {
+					$falseyResultTypes[] = $array;
+				}
+				continue;
+			}
+
+			$array = TypeCombinator::intersect($arrayType, new NonEmptyArrayType());
+			$truthyResultTypes[] = $array;
+			if (!$isSizeSuperTypeOfArraySize->maybe()) {
+				$falseyResultTypes[] = $array;
+			}
+		}
+
+		return [
+			$this->create($countFuncCall->getArgs()[0]->value, TypeCombinator::union(...$truthyResultTypes), TypeSpecifierContext::createTruthy())->setRootExpr($rootExpr),
+			$this->create($countFuncCall->getArgs()[0]->value, TypeCombinator::union(...$falseyResultTypes), TypeSpecifierContext::createFalsey())->setRootExpr($rootExpr),
+		];
 	}
 
 }

@@ -637,3 +637,30 @@ function (mixed $m): void {
 
 	assertType("mixed", $m);
 };
+
+function (array $a): void {
+	if (count($a) === -10) {
+		assertType('*NEVER*', $a);
+	} else {
+		assertType('array', $a);
+	}
+	assertType('array', $a);
+	if (count($a) === 0) {
+		assertType('array{}', $a);
+	} else {
+		assertType('non-empty-array', $a);
+	}
+	if (count($a) !== 0) {
+		assertType('non-empty-array', $a);
+	} else {
+		assertType('array{}', $a);
+	}
+};
+
+function (string $s): void {
+	if (strlen($s) === 1) {
+		assertType('non-empty-string', $s);
+	} else {
+		assertType('string', $s);
+	}
+};

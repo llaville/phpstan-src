@@ -345,6 +345,8 @@ final class EqualHandler implements ExprHandler
 			}
 		}
 
+		// todo normalize?
+
 		return [
 			$this->specifiedTypesHelper->create($equalExpr->left, $leftType, TypeSpecifierContext::createTruthy())->setRootExpr($equalExpr)->unionWith(
 				$this->specifiedTypesHelper->create($equalExpr->right, $rightType, TypeSpecifierContext::createTruthy())->setRootExpr($equalExpr),
