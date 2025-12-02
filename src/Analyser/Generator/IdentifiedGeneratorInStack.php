@@ -16,6 +16,8 @@ use function sprintf;
 final class IdentifiedGeneratorInStack
 {
 
+	public bool $sendResultOnComplete = true;
+
 	/**
 	 * @param (
 	 *     Generator<int, GeneratorTValueType, GeneratorTSendType, StmtAnalysisResult>| // analyseStmt

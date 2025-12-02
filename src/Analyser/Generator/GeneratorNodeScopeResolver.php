@@ -182,6 +182,7 @@ final class GeneratorNodeScopeResolver
 			if ($pendingFibersGen->valid()) {
 				$stack[] = $gen;
 				$gen = new IdentifiedGeneratorInStack($pendingFibersGen, new Stmt\Expression(new Node\Scalar\String_('pendingFibers')), null, null);
+				$gen->sendResultOnComplete = false;
 			}
 
 			if ($gen->generator->valid()) {
@@ -293,6 +294,7 @@ final class GeneratorNodeScopeResolver
 			}
 
 			$result = $gen->generator->getReturn();
+			$sendResult = $gen->sendResultOnComplete;
 			if (count($stack) === 0) {
 				foreach ($fibersStorage->pendingFibers as $pending) {
 					$request = $pending['request'];
@@ -320,6 +322,10 @@ final class GeneratorNodeScopeResolver
 			}
 
 			$gen = array_pop($stack);
+			if (!$sendResult) {
+				continue;
+			}
+
 			$gen->generator->send($result);
 		}
 	}
