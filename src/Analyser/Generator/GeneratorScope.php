@@ -1255,6 +1255,28 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 		return $expressionTypes;
 	}
 
+	public function rememberConstructorScope(): self
+	{
+		return $this->scopeFactory->create(
+			$this->context,
+			$this->isDeclareStrictTypes(),
+			null,
+			$this->getNamespace(),
+			$this->rememberConstructorExpressions($this->expressionTypes),
+			$this->rememberConstructorExpressions($this->nativeExpressionTypes),
+			$this->conditionalExpressions,
+			$this->inClosureBindScopeClasses,
+			$this->anonymousFunctionReflection,
+			$this->inFirstLevelStatement,
+			[],
+			[],
+			$this->inFunctionCallsStack,
+			$this->afterExtractCall,
+			$this->parentScope,
+			$this->nativeTypesPromoted,
+		);
+	}
+
 	/**
 	 * @api
 	 * @param Type[] $phpDocParameterTypes
