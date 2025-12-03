@@ -18,7 +18,7 @@ class Foo
 }
 
 function (Foo $foo): void {
-	$foo->doFoo(1, 2, 3);
+	$foo->doFoo($a = 1, $a + 1, 3);
 
 	echo 'foo';
 };
