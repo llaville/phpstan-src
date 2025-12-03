@@ -14,6 +14,7 @@ use PHPStan\Analyser\Generator\ExprHandler;
 use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\SpecifiedTypes;
 use PHPStan\DependencyInjection\AutowiredService;
+use function array_merge;
 
 /**
  * @implements ExprHandler<NotIdentical>

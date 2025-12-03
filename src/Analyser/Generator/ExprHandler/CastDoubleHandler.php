@@ -6,7 +6,6 @@ use Generator;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\BinaryOp\NotEqual;
 use PhpParser\Node\Scalar\Float_;
-use PhpParser\Node\Scalar\Int_ as ScalarInt;
 use PhpParser\Node\Stmt;
 use PHPStan\Analyser\ExpressionContext;
 use PHPStan\Analyser\Generator\ExprAnalysisRequest;

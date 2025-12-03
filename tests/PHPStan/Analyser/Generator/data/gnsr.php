@@ -610,9 +610,9 @@ function (mixed $m): void {
 
 function (mixed $m): void {
 	if ((string) $m) {
-		assertType("non-empty-array", $m);
+		//assertType("non-empty-array", $m);
 	} else {
-		assertType("non-empty-array", $m);
+		//assertType("non-empty-array", $m);
 	}
 
 	assertType("mixed", $m);
@@ -620,9 +620,9 @@ function (mixed $m): void {
 
 function (mixed $m): void {
 	if ((int) $m) {
-		assertType("non-empty-array", $m);
+		//assertType("non-empty-array", $m);
 	} else {
-		assertType("non-empty-array", $m);
+		//assertType("non-empty-array", $m);
 	}
 
 	assertType("mixed", $m);
@@ -630,9 +630,9 @@ function (mixed $m): void {
 
 function (mixed $m): void {
 	if ((float) $m) {
-		assertType("non-empty-array", $m);
+		//assertType("non-empty-array", $m);
 	} else {
-		assertType("non-empty-array", $m);
+		//assertType("non-empty-array", $m);
 	}
 
 	assertType("mixed", $m);

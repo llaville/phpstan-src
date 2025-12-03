@@ -82,10 +82,10 @@ use function sprintf;
 final class GeneratorNodeScopeResolver
 {
 
-	/** @var ExprHandler[]|null */
+	/** @var ExprHandler<Expr>[]|null */
 	private ?array $exprHandlers = null;
 
-	/** @var StmtHandler[]|null */
+	/** @var StmtHandler<Stmt>[]|null */
 	private ?array $stmtHandlers = null;
 
 	public function __construct(
@@ -425,7 +425,7 @@ final class GeneratorNodeScopeResolver
 	}
 
 	/**
-	 * @return StmtHandler[]
+	 * @return StmtHandler<Stmt>[]
 	 */
 	private function getStmtHandlers(): array
 	{
@@ -548,7 +548,7 @@ final class GeneratorNodeScopeResolver
 	}
 
 	/**
-	 * @return ExprHandler[]
+	 * @return ExprHandler<Expr>[]
 	 */
 	private function getExprHandlers(): array
 	{

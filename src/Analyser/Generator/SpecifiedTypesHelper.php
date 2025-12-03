@@ -2,7 +2,6 @@
 
 namespace PHPStan\Analyser\Generator;
 
-use Generator;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
@@ -22,6 +21,8 @@ use PHPStan\Type\IntegerRangeType;
 use PHPStan\Type\StaticTypeFactory;
 use PHPStan\Type\Type;
 use PHPStan\Type\TypeCombinator;
+use function count;
+use const COUNT_NORMAL;
 
 #[AutowiredService]
 final class SpecifiedTypesHelper
@@ -124,11 +125,6 @@ final class SpecifiedTypesHelper
 	}
 
 	/**
-	 * @param FuncCall $countFuncCall
-	 * @param Type $type
-	 * @param Type $sizeType
-	 * @param TypeSpecifierContext $context
-	 * @param Expr $rootExpr
 	 * @return array{SpecifiedTypes, SpecifiedTypes}|null
 	 */
 	public function specifyTypesForCountFuncCall(
@@ -253,9 +249,11 @@ final class SpecifiedTypesHelper
 
 			$array = TypeCombinator::intersect($arrayType, new NonEmptyArrayType());
 			$truthyResultTypes[] = $array;
-			if (!$isSizeSuperTypeOfArraySize->maybe()) {
-				$falseyResultTypes[] = $array;
+			if ($isSizeSuperTypeOfArraySize->maybe()) {
+				continue;
 			}
+
+			$falseyResultTypes[] = $array;
 		}
 
 		return [
