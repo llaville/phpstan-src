@@ -5,6 +5,7 @@ namespace PHPStan\Testing;
 use PhpParser\Node;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Name;
+use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScopeFactory;
 use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
@@ -71,7 +72,13 @@ abstract class TypeInferenceTestCase extends PHPStanTestCase
 		$reflectionProvider = self::createReflectionProvider();
 		$typeSpecifier = $container->getService('typeSpecifier');
 
-		return new NodeScopeResolver(
+		$enableFnsr = getenv('PHPSTAN_FNSR');
+		$className = NodeScopeResolver::class;
+		if ($enableFnsr === '1') {
+			$className = FiberNodeScopeResolver::class;
+		}
+
+		return new $className(
 			$reflectionProvider,
 			$container->getByType(InitializerExprTypeResolver::class),
 			self::getReflector(),

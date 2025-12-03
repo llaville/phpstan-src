@@ -6,6 +6,7 @@ use PhpParser\Node;
 use PHPStan\Analyser\Analyser;
 use PHPStan\Analyser\AnalyserResultFinalizer;
 use PHPStan\Analyser\Error;
+use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
 use PHPStan\Analyser\FileAnalyser;
 use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScopeFactory;
@@ -97,7 +98,13 @@ abstract class RuleTestCase extends PHPStanTestCase
 		$reflectionProvider = $this->createReflectionProvider();
 		$typeSpecifier = $this->getTypeSpecifier();
 
-		return new NodeScopeResolver(
+		$enableFnsr = getenv('PHPSTAN_FNSR');
+		$className = NodeScopeResolver::class;
+		if ($enableFnsr === '1') {
+			$className = FiberNodeScopeResolver::class;
+		}
+
+		return new $className(
 			$reflectionProvider,
 			self::getContainer()->getByType(InitializerExprTypeResolver::class),
 			self::getReflector(),
