@@ -82,6 +82,12 @@ use function sprintf;
 final class GeneratorNodeScopeResolver
 {
 
+	/** @var ExprHandler[]|null */
+	private ?array $exprHandlers = null;
+
+	/** @var StmtHandler[]|null */
+	private ?array $stmtHandlers = null;
+
 	public function __construct(
 		private ExprPrinter $exprPrinter,
 		private VarAnnotationHelper $varAnnotationHelper,
@@ -399,10 +405,7 @@ final class GeneratorNodeScopeResolver
 			}
 		}
 
-		/**
-		 * @var StmtHandler<Stmt> $stmtHandler
-		 */
-		foreach ($this->container->getServicesByTag(StmtHandler::HANDLER_TAG) as $stmtHandler) {
+		foreach ($this->getStmtHandlers() as $stmtHandler) {
 			if (!$stmtHandler->supports($stmt)) {
 				continue;
 			}
@@ -419,6 +422,14 @@ final class GeneratorNodeScopeResolver
 		}
 
 		throw new ShouldNotHappenException('Unhandled stmt: ' . get_class($stmt));
+	}
+
+	/**
+	 * @return StmtHandler[]
+	 */
+	private function getStmtHandlers(): array
+	{
+		return $this->stmtHandlers ??= $this->container->getServicesByTag(StmtHandler::HANDLER_TAG);
 	}
 
 	/**
@@ -515,10 +526,7 @@ final class GeneratorNodeScopeResolver
 
 		yield new NodeCallbackRequest($expr, $context->isDeep() ? $scope->exitFirstLevelStatements() : $scope, $alternativeNodeCallback);
 
-		/**
-		 * @var ExprHandler<Expr> $exprHandler
-		 */
-		foreach ($this->container->getServicesByTag(ExprHandler::HANDLER_TAG) as $exprHandler) {
+		foreach ($this->getExprHandlers() as $exprHandler) {
 			if (!$exprHandler->supports($expr)) {
 				continue;
 			}
@@ -537,6 +545,14 @@ final class GeneratorNodeScopeResolver
 		}
 
 		throw new ShouldNotHappenException('Unhandled expr: ' . get_class($expr));
+	}
+
+	/**
+	 * @return ExprHandler[]
+	 */
+	private function getExprHandlers(): array
+	{
+		return $this->exprHandlers ??= $this->container->getServicesByTag(ExprHandler::HANDLER_TAG);
 	}
 
 	/**
