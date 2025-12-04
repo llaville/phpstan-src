@@ -3,7 +3,6 @@
 namespace PHPStan\Rules\Comparison;
 
 use PhpParser\Node;
-use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\RicherScopeGetTypeHelper;
 use PHPStan\Analyser\Scope;
@@ -45,7 +44,7 @@ final class StrictComparisonOfDifferentTypesRule implements Rule
 
 	public function processNode(Node $node, Scope $scope): array
 	{
-		if (!$scope instanceof MutatingScope && !$scope instanceof GeneratorScope) {
+		if (!$scope instanceof MutatingScope) {
 			throw new ShouldNotHappenException();
 		}
 

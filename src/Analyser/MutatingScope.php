@@ -33,7 +33,6 @@ use PHPStan\Node\Expr\ExistingArrayDimFetch;
 use PHPStan\Node\Expr\GetIterableKeyTypeExpr;
 use PHPStan\Node\Expr\GetIterableValueTypeExpr;
 use PHPStan\Node\Expr\GetOffsetValueTypeExpr;
-use PHPStan\Node\Expr\IdentifiedTypeExpr;
 use PHPStan\Node\Expr\IntertwinedVariableByReferenceWithExpr;
 use PHPStan\Node\Expr\NativeTypeExpr;
 use PHPStan\Node\Expr\OriginalForeachKeyExpr;
@@ -893,10 +892,6 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 
 		if (!$node instanceof Variable && $this->hasExpressionType($node)->yes()) {
 			return $this->expressionTypes[$exprString]->getType();
-		}
-
-		if ($node instanceof IdentifiedTypeExpr) {
-			return $node->getExprType();
 		}
 
 		if ($node instanceof AlwaysRememberedExpr) {

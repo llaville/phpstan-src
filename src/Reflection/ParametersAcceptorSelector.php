@@ -5,7 +5,6 @@ namespace PHPStan\Reflection;
 use Closure;
 use PhpParser\Node;
 use PHPStan\Analyser\ArgumentsNormalizer;
-use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\Expr\ParameterVariableOriginalValueExpr;
@@ -498,13 +497,13 @@ final class ParametersAcceptorSelector
 				}
 			}
 
-			if ($parameter !== null && ($scope instanceof MutatingScope || $scope instanceof GeneratorScope)) {
+			if ($parameter !== null && $scope instanceof MutatingScope) {
 				$scope = $scope->pushInFunctionCall(null, $parameter);
 			}
 
 			$type = $scope->getType($originalArg->value);
 
-			if ($parameter !== null && ($scope instanceof MutatingScope || $scope instanceof GeneratorScope)) {
+			if ($parameter !== null && $scope instanceof MutatingScope) {
 				$scope = $scope->popInFunctionCall();
 			}
 

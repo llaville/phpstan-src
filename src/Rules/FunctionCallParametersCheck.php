@@ -4,7 +4,6 @@ namespace PHPStan\Rules;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr;
-use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\AutowiredParameter;
@@ -319,12 +318,12 @@ final class FunctionCallParametersCheck
 			}
 
 			if ($argumentValueType === null) {
-				if ($scope instanceof MutatingScope || $scope instanceof GeneratorScope) {
+				if ($scope instanceof MutatingScope) {
 					$scope = $scope->pushInFunctionCall(null, $parameter);
 				}
 				$argumentValueType = $scope->getType($argumentValue);
 
-				if ($scope instanceof MutatingScope || $scope instanceof GeneratorScope) {
+				if ($scope instanceof MutatingScope) {
 					$scope = $scope->popInFunctionCall();
 				}
 			}

@@ -2,8 +2,6 @@
 
 namespace PHPStan\Type\Php;
 
-use Override;
-use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -15,15 +13,13 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Return_;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\CloningVisitor;
-use PhpParser\NodeVisitorAbstract;
+use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\AutowiredService;
-use PHPStan\Node\Expr\IdentifiedTypeExpr;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\ShouldNotHappenException;
+use PHPStan\TrinaryLogic;
 use PHPStan\Type\ArrayType;
 use PHPStan\Type\BenevolentUnionType;
 use PHPStan\Type\Constant\ConstantArrayType;
@@ -196,6 +192,10 @@ final class ArrayFilterFunctionReturnTypeHelper
 
 	private function filterByTruthyValue(Scope $scope, Error|Variable|null $itemVar, Type $arrayType, Error|Variable|null $keyVar, Expr $expr): Type
 	{
+		if (!$scope instanceof MutatingScope) {
+			throw new ShouldNotHappenException();
+		}
+
 		$constantArrays = $arrayType->getConstantArrays();
 		if (count($constantArrays) > 0) {
 			$results = [];
@@ -235,56 +235,24 @@ final class ArrayFilterFunctionReturnTypeHelper
 	/**
 	 * @return array{Type, Type, bool}
 	 */
-	private function processKeyAndItemType(Scope $scope, Type $keyType, Type $itemType, Error|Variable|null $itemVar, Error|Variable|null $keyVar, Expr $expr): array
+	private function processKeyAndItemType(MutatingScope $scope, Type $keyType, Type $itemType, Error|Variable|null $itemVar, Error|Variable|null $keyVar, Expr $expr): array
 	{
-		$itemTypeExpr = null;
-		$cloneTraverser = new NodeTraverser(new CloningVisitor());
-		/** @var Expr $expr */
-		[$expr] = $cloneTraverser->traverse([$expr]);
-
-		$changeTraverserFactory = static fn (string $varName, IdentifiedTypeExpr $typeExpr) => new NodeTraverser(new class ($varName, $typeExpr) extends NodeVisitorAbstract {
-
-			public function __construct(private string $varName, private IdentifiedTypeExpr $typeExpr)
-			{
-			}
-
-			#[Override]
-			public function leaveNode(Node $node): ?IdentifiedTypeExpr
-			{
-				$node->setAttribute('phpstan_cache_printer', null);
-				if (!$node instanceof Variable) {
-					return null;
-				}
-				if ($node->name !== $this->varName) {
-					return null;
-				}
-
-				return $this->typeExpr;
-			}
-
-		});
-
+		$itemVarName = null;
 		if ($itemVar !== null) {
 			if (!$itemVar instanceof Variable || !is_string($itemVar->name)) {
 				throw new ShouldNotHappenException();
 			}
-			$itemTypeExpr = new IdentifiedTypeExpr($itemType, $itemVar);
-			$changeTraverser = $changeTraverserFactory($itemVar->name, $itemTypeExpr);
-
-			/** @var Expr $expr */
-			[$expr] = $changeTraverser->traverse([$expr]);
+			$itemVarName = $itemVar->name;
+			$scope = $scope->assignVariable($itemVarName, $itemType, new MixedType(), TrinaryLogic::createYes());
 		}
 
-		$keyTypeExpr = null;
+		$keyVarName = null;
 		if ($keyVar !== null) {
 			if (!$keyVar instanceof Variable || !is_string($keyVar->name)) {
 				throw new ShouldNotHappenException();
 			}
-			$keyTypeExpr = new IdentifiedTypeExpr($keyType, $keyVar);
-			$changeTraverser = $changeTraverserFactory($keyVar->name, $keyTypeExpr);
-
-			/** @var Expr $expr */
-			[$expr] = $changeTraverser->traverse([$expr]);
+			$keyVarName = $keyVar->name;
+			$scope = $scope->assignVariable($keyVarName, $keyType, new MixedType(), TrinaryLogic::createYes());
 		}
 
 		$booleanResult = $scope->getType($expr)->toBoolean();
@@ -295,8 +263,8 @@ final class ArrayFilterFunctionReturnTypeHelper
 		$scope = $scope->filterByTruthyValue($expr);
 
 		return [
-			$keyTypeExpr !== null ? $scope->getType($keyTypeExpr) : $keyType,
-			$itemTypeExpr !== null ? $scope->getType($itemTypeExpr) : $itemType,
+			$keyVarName !== null ? $scope->getVariableType($keyVarName) : $keyType,
+			$itemVarName !== null ? $scope->getVariableType($itemVarName) : $itemType,
 			!$booleanResult->isTrue()->yes(),
 		];
 	}

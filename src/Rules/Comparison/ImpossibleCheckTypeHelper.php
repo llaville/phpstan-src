@@ -8,7 +8,6 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\StaticCall;
-use PHPStan\Analyser\Generator\GeneratorScope;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\Scope;
 use PHPStan\Analyser\TypeSpecifier;
@@ -249,7 +248,7 @@ final class ImpossibleCheckTypeHelper
 			}
 		}
 
-		if (!$scope instanceof MutatingScope && !$scope instanceof GeneratorScope) {
+		if (!$scope instanceof MutatingScope) {
 			throw new ShouldNotHappenException();
 		}
 
