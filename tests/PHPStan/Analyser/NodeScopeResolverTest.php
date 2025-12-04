@@ -8,7 +8,6 @@ use PHPStan\Testing\TypeInferenceTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use stdClass;
 use function array_merge;
-use function array_shift;
 use function define;
 use function dirname;
 use function implode;
@@ -270,23 +269,24 @@ class NodeScopeResolverTest extends TypeInferenceTestCase
 		$failures = [];
 
 		foreach ($asserts as $args) {
-			$assertType = array_shift($args);
-			$file = array_shift($args);
+			if ($args[0] === 'type') {
+				$file = $args[1];
 
-			if ($assertType === 'type') {
-				$expected = $args[0];
-				$actual = $args[1];
+				$expected = $args[2];
+				$actual = $args[3];
 
 				if ($expected !== $actual) {
-					$failures[] = sprintf("Line %d:\nExpected: %s\nActual:   %s\n", $args[2], $expected, $actual);
+					$failures[] = sprintf("Line %d:\nExpected: %s\nActual:   %s\n", $args[4], $expected, $actual);
 				}
-			} elseif ($assertType === 'variableCertainty') {
-				$expectedCertainty = $args[0];
-				$actualCertainty = $args[1];
-				$variableName = $args[2];
+			} elseif ($args[0] === 'variableCertainty') {
+				$file = $args[1];
+
+				$expectedCertainty = $args[2];
+				$actualCertainty = $args[3];
+				$variableName = $args[4];
 
 				if ($expectedCertainty->equals($actualCertainty) !== true) {
-					$failures[] = sprintf("Certainty of %s on line %d:\nExpected: %s\nActual:   %s\n", $variableName, $args[3], $expectedCertainty->describe(), $actualCertainty->describe());
+					$failures[] = sprintf("Certainty of %s on line %d:\nExpected: %s\nActual:   %s\n", $variableName, $args[5], $expectedCertainty->describe(), $actualCertainty->describe());
 				}
 			}
 		}
