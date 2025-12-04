@@ -63,6 +63,16 @@ jobs:
       - name: "PHPStan"
         run: "make phpstan"
 
+      - name: "Generate baseline"
+        if: failure() && (matrix.php-version == '7.4' || matrix.php-version == '8.0' || matrix.php-version == '8.1')
+        run: "php -d memory_limit=448M bin/phpstan analyse --generate-baseline baseline-php-${{ matrix.php-version }}.neon"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: baseline-${{ matrix.php-version }}
+          path: baseline-php-${{ matrix.php-version }}.neon
+
   static-analysis-with-result-cache:
     name: "PHPStan with result cache"
 
