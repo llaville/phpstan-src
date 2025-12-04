@@ -9,12 +9,19 @@ final class RunInFiberResult
 {
 
 	/**
+	 * @readonly
+	 * @var T
+	 */
+	public mixed $value;
+
+	/**
 	 * @param T $value
 	 */
 	public function __construct(
-		public readonly mixed $value,
+		mixed $value,
 	)
 	{
+		$this->value = $value;
 	}
 
 }
