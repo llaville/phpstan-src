@@ -58,6 +58,7 @@ use function is_string;
 use function sprintf;
 use const ARRAY_FILTER_USE_BOTH;
 use const ARRAY_FILTER_USE_KEY;
+use const CURLOPT_SHARE;
 use const CURLOPT_SSL_VERIFYHOST;
 
 /**
@@ -1210,6 +1211,21 @@ final class ParametersAcceptorSelector
 			if (defined($constName) && constant($constName) === $curlOpt) {
 				return new ResourceType();
 			}
+		}
+
+		if ($curlOpt === CURLOPT_SHARE) {
+			$phpversion = PhpVersionStaticAccessor::getInstance();
+
+			if ($phpversion->supportsCurlShareHandle()) {
+				$shareType = new ObjectType('CurlShareHandle');
+			} else {
+				$shareType = new ResourceType();
+			}
+			if ($phpversion->supportsCurlSharePersistentHandle()) {
+				$shareType = TypeCombinator::union($shareType, new ObjectType('CurlSharePersistentHandle'));
+			}
+
+			return $shareType;
 		}
 
 		// unknown constant

@@ -1401,6 +1401,25 @@ class CallToFunctionParametersRuleTest extends RuleTestCase
 		]);
 	}
 
+	public function testCurlSetOptInvalidShare(): void
+	{
+		if (PHP_VERSION_ID < 80000) {
+			$errors = [
+				['Parameter #3 $value of function curl_setopt expects resource, string given.', 8],
+			];
+		} elseif (PHP_VERSION_ID < 80500) {
+			$errors = [
+				['Parameter #3 $value of function curl_setopt expects CurlShareHandle, string given.', 8],
+			];
+		} else {
+			$errors = [
+				['Parameter #3 $value of function curl_setopt expects CurlShareHandle|CurlSharePersistentHandle, string given.', 8],
+			];
+		}
+
+		$this->analyse([__DIR__ . '/data/curl_setopt_share.php'], $errors);
+	}
+
 	#[RequiresPhp('>= 8.1')]
 	public function testCurlSetOptArray(): void
 	{
