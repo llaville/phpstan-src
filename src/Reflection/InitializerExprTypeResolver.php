@@ -117,6 +117,7 @@ use function is_string;
 use function max;
 use function min;
 use function sprintf;
+use function str_starts_with;
 use function strtolower;
 use const INF;
 
@@ -588,6 +589,10 @@ final class InitializerExprTypeResolver
 
 		$leftNumericStringNonEmpty = TypeCombinator::remove($leftStringType, new ConstantStringType(''));
 		if ($leftNumericStringNonEmpty->isNumericString()->yes()) {
+			$validationCallback = $left->isInteger()->yes()
+				? static fn (string $value): bool => !str_starts_with($value, '-')
+				: static fn (string $value): bool => Strings::match($value, '#^\d+$#') !== null;
+
 			$allRightConstantsZeroOrMore = false;
 			foreach ($rightConstantStrings as $rightConstantString) {
 				if ($rightConstantString->getValue() === '') {
@@ -596,7 +601,7 @@ final class InitializerExprTypeResolver
 
 				if (
 					!is_numeric($rightConstantString->getValue())
-					|| Strings::match($rightConstantString->getValue(), '#^[0-9]+$#') === null
+					|| !$validationCallback($rightConstantString->getValue())
 				) {
 					$allRightConstantsZeroOrMore = false;
 					break;

@@ -48,8 +48,19 @@ class HelloWorld
 		assertType('lowercase-string&non-falsy-string', $i.$maybeNonNumericConstStrings);
 		assertType('lowercase-string&non-falsy-string', $maybeNonNumericConstStrings.$i);
 
-		assertType('lowercase-string&non-falsy-string&uppercase-string', $i.$maybeFloatConstStrings); // could be 'lowercase-string&non-falsy-string&numeric-string'
+		assertType('lowercase-string&non-falsy-string&numeric-string&uppercase-string', $i.$maybeFloatConstStrings);
 		assertType('lowercase-string&non-falsy-string&uppercase-string', $maybeFloatConstStrings.$i);
+
+		assertType('lowercase-string&non-falsy-string&numeric-string&uppercase-string', $i.'1');
+		assertType('lowercase-string&non-falsy-string&numeric-string&uppercase-string', $i.'1.0');
+		assertType('lowercase-string&non-falsy-string&uppercase-string', $i.'1.1.1');
+		assertType('lowercase-string&non-falsy-string&uppercase-string', $i.'-1');
+		assertType('lowercase-string&non-falsy-string&uppercase-string', $i.'-1.0');
+		assertType('lowercase-string&non-falsy-string&numeric-string', $i.'10e-3');
+		assertType('lowercase-string&non-falsy-string', $i.'-10e-3');
+		assertType('non-falsy-string&numeric-string&uppercase-string', $i.'10E3');
+		assertType('non-falsy-string&uppercase-string', $i.'-10E3');
+		assertType('non-falsy-string', $i.'10eE3');
 
 		assertType('lowercase-string&non-empty-string&numeric-string&uppercase-string', $i.$bool);
 		assertType('lowercase-string&non-empty-string&uppercase-string', $bool.$i);
@@ -68,14 +79,14 @@ class HelloWorld
 		assertType('non-falsy-string&numeric-string&uppercase-string', $float.$positiveInt);
 		assertType('non-falsy-string&uppercase-string', $float.$negativeInt);
 		assertType('non-falsy-string&uppercase-string', $float.$i);
-		assertType('non-falsy-string&uppercase-string', $i.$float); // could be 'non-falsy-string&numeric-string&uppercase-string'
+		assertType('non-falsy-string&uppercase-string', $i.$float);
 		assertType('non-falsy-string', $numericString.$float);
 		assertType('non-falsy-string', $numericString.$maybeFloatConstStrings);
 
 		// https://3v4l.org/Ia4r0
 		$scientificFloatAsString = '3e4';
 		assertType('non-falsy-string', $numericString.$scientificFloatAsString);
-		assertType('lowercase-string&non-falsy-string', $i.$scientificFloatAsString);
+		assertType('lowercase-string&non-falsy-string&numeric-string', $i.$scientificFloatAsString);
 		assertType('non-falsy-string', $scientificFloatAsString.$numericString);
 		assertType('lowercase-string&non-falsy-string', $scientificFloatAsString.$i);
 	}
