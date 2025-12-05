@@ -2,6 +2,7 @@
 
 namespace PHPStan\Rules\TooWideTypehints;
 
+use PhpParser\Node\Expr\ConstFetch;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\AutowiredParameter;
 use PHPStan\DependencyInjection\AutowiredService;
@@ -25,8 +26,10 @@ use PHPStan\Type\UnionType;
 use PHPStan\Type\VerbosityLevel;
 use PHPStan\Type\VoidType;
 use function count;
+use function in_array;
 use function lcfirst;
 use function sprintf;
+use function strtolower;
 
 #[AutowiredService]
 final class TooWideTypeCheck
@@ -204,6 +207,18 @@ final class TooWideTypeCheck
 		}
 
 		$returnType = TypeCombinator::union(...$returnTypes);
+
+		if (
+			count($returnStatements) === 1
+			&& $returnStatements[0]->getReturnNode()->expr instanceof ConstFetch
+			&& in_array(strtolower($returnStatements[0]->getReturnNode()->expr->name->toString()), ['true', 'false'], true)
+			&& (
+				$nativeFunctionReturnType->isBoolean()->yes()
+				|| $phpDocFunctionReturnType->isBoolean()->yes()
+			)
+		) {
+			return [];
+		}
 
 		$unionMessagePattern = sprintf('%s never returns %%s so it can be removed from the return type.', $functionDescription);
 		$boolMessagePattern = sprintf('%s never returns %%s so the return type can be changed to %%s.', $functionDescription);
