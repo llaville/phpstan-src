@@ -982,9 +982,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			}
 
 			if ($this->getBooleanExpressionDepth($node->left) <= self::BOOLEAN_EXPRESSION_MAX_PROCESS_DEPTH) {
-				$noopCallback = static function (): void {
-				};
-				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, $noopCallback, ExpressionContext::createDeep());
+				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, new ExpressionResultStorage(), new NoopNodeCallback(), ExpressionContext::createDeep());
 				$rightBooleanType = $leftResult->getTruthyScope()->getType($node->right)->toBoolean();
 			} else {
 				$rightBooleanType = $this->filterByTruthyValue($node->left)->getType($node->right)->toBoolean();
@@ -1014,9 +1012,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			}
 
 			if ($this->getBooleanExpressionDepth($node->left) <= self::BOOLEAN_EXPRESSION_MAX_PROCESS_DEPTH) {
-				$noopCallback = static function (): void {
-				};
-				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, $noopCallback, ExpressionContext::createDeep());
+				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, new ExpressionResultStorage(), new NoopNodeCallback(), ExpressionContext::createDeep());
 				$rightBooleanType = $leftResult->getFalseyScope()->getType($node->right)->toBoolean();
 			} else {
 				$rightBooleanType = $this->filterByFalseyValue($node->left)->getType($node->right)->toBoolean();
@@ -1406,6 +1402,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 					new Node\Stmt\Expression($node->expr),
 					$node->expr,
 					$arrowScope,
+					new ExpressionResultStorage(),
 					static function (Node $node, Scope $scope) use ($arrowScope, &$arrowFunctionImpurePoints, &$invalidateExpressions): void {
 						if ($scope->getAnonymousFunctionReflection() !== $arrowScope->getAnonymousFunctionReflection()) {
 							return;
@@ -2042,9 +2039,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		}
 
 		if ($node instanceof Expr\Ternary) {
-			$noopCallback = static function (): void {
-			};
-			$condResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->cond), $node->cond, $this, $noopCallback, ExpressionContext::createDeep());
+			$condResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->cond), $node->cond, $this, new ExpressionResultStorage(), new NoopNodeCallback(), ExpressionContext::createDeep());
 			if ($node->if === null) {
 				$conditionType = $this->getType($node->cond);
 				$booleanConditionType = $conditionType->toBoolean();

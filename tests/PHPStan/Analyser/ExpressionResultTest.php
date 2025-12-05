@@ -208,6 +208,7 @@ class ExpressionResultTest extends PHPStanTestCase
 			$stmt,
 			$expr,
 			$scope,
+			new ExpressionResultStorage(),
 			static function (): void {
 			},
 			ExpressionContext::createTopLevel(),
