@@ -23,6 +23,7 @@ class RequireExtendsDefinitionTraitRuleTest extends RuleTestCase
 		return new RequireExtendsDefinitionTraitRule(
 			$reflectionProvider,
 			new RequireExtendsCheck(
+				$reflectionProvider,
 				new ClassNameCheck(
 					new ClassCaseSensitivityCheck($reflectionProvider, true),
 					new ClassForbiddenNameCheck($container),
@@ -53,11 +54,6 @@ class RequireExtendsDefinitionTraitRuleTest extends RuleTestCase
 			],
 			[
 				'PHPDoc tag @phpstan-require-extends contains unknown class IncompatibleRequireExtends\NonExistentClass.',
-				192,
-				'Learn more at https://phpstan.org/user-guide/discovering-symbols',
-			],
-			[
-				'PHPDoc tag @phpstan-require-extends contains unknown class IncompatibleRequireExtends\SomeClass.',
 				192,
 				'Learn more at https://phpstan.org/user-guide/discovering-symbols',
 			],

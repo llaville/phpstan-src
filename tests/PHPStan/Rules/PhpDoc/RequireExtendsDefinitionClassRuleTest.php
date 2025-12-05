@@ -22,6 +22,7 @@ class RequireExtendsDefinitionClassRuleTest extends RuleTestCase
 		$container = self::getContainer();
 		return new RequireExtendsDefinitionClassRule(
 			new RequireExtendsCheck(
+				$reflectionProvider,
 				new ClassNameCheck(
 					new ClassCaseSensitivityCheck($reflectionProvider, true),
 					new ClassForbiddenNameCheck($container),
@@ -83,11 +84,6 @@ class RequireExtendsDefinitionClassRuleTest extends RuleTestCase
 			],
 			[
 				'PHPDoc tag @phpstan-require-extends contains unknown class IncompatibleRequireExtends\NonExistentClass.',
-				183,
-				'Learn more at https://phpstan.org/user-guide/discovering-symbols',
-			],
-			[
-				'PHPDoc tag @phpstan-require-extends contains unknown class IncompatibleRequireExtends\SomeClass.',
 				183,
 				'Learn more at https://phpstan.org/user-guide/discovering-symbols',
 			],

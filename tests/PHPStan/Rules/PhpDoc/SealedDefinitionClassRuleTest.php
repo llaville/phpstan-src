@@ -21,6 +21,7 @@ class SealedDefinitionClassRuleTest extends RuleTestCase
 
 		$container = self::getContainer();
 		return new SealedDefinitionClassRule(
+			$reflectionProvider,
 			new ClassNameCheck(
 				new ClassCaseSensitivityCheck($reflectionProvider, true),
 				new ClassForbiddenNameCheck($container),
@@ -48,6 +49,11 @@ class SealedDefinitionClassRuleTest extends RuleTestCase
 			[
 				'PHPDoc tag @phpstan-sealed contains unknown class IncompatibleSealed\UnknownClass.',
 				26,
+				'Learn more at https://phpstan.org/user-guide/discovering-symbols',
+			],
+			[
+				'PHPDoc tag @phpstan-sealed contains unknown class IncompatibleSealed\UnknownClass.',
+				46,
 				'Learn more at https://phpstan.org/user-guide/discovering-symbols',
 			],
 		]);
