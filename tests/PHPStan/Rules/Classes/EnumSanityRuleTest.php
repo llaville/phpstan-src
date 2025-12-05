@@ -2,6 +2,7 @@
 
 namespace PHPStan\Rules\Classes;
 
+use PHPStan\Reflection\InitializerExprTypeResolver;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\RequiresPhp;
@@ -14,7 +15,9 @@ class EnumSanityRuleTest extends RuleTestCase
 
 	protected function getRule(): Rule
 	{
-		return new EnumSanityRule();
+		return new EnumSanityRule(
+			self::getContainer()->getByType(InitializerExprTypeResolver::class),
+		);
 	}
 
 	#[RequiresPhp('>= 8.1')]
@@ -137,6 +140,41 @@ class EnumSanityRuleTest extends RuleTestCase
 			[
 				'Enum Bug11592\BackedTest2 cannot redeclare native method tryFrom().',
 				41,
+			],
+		]);
+	}
+
+	#[RequiresPhp('>= 8.1')]
+	public function testBug13768(): void
+	{
+		$this->analyse([__DIR__ . '/data/bug-13768.php'], [
+			[
+				'Enum Bug13768\Order is not backed, but case A has value 1.5.',
+				7,
+			],
+			[
+				'Enum Bug13768\Order is not backed, but case B has value 2.5.',
+				8,
+			],
+			[
+				'Enum Bug13768\Order is not backed, but case C has value 3.',
+				9,
+			],
+			[
+				'Enum Bug13768\Order is not backed, but case D has value \'3\'.',
+				10,
+			],
+			[
+				'Enum Bug13768\Order is not backed, but case E has value false.',
+				11,
+			],
+			[
+				'Enum Bug13768\Order is not backed, but case F has value 1.',
+				12,
+			],
+			[
+				'Enum Bug13768\Backed has duplicate value 1 for cases One, Two.',
+				20,
 			],
 		]);
 	}

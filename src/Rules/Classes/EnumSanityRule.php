@@ -6,8 +6,11 @@ use PhpParser\Node;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\RegisteredRule;
 use PHPStan\Node\InClassNode;
+use PHPStan\Reflection\InitializerExprContext;
+use PHPStan\Reflection\InitializerExprTypeResolver;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
+use PHPStan\ShouldNotHappenException;
 use PHPStan\Type\IntegerType;
 use PHPStan\Type\StringType;
 use PHPStan\Type\VerbosityLevel;
@@ -16,6 +19,8 @@ use function array_key_exists;
 use function count;
 use function implode;
 use function in_array;
+use function is_int;
+use function is_string;
 use function sprintf;
 
 /**
@@ -30,6 +35,12 @@ final class EnumSanityRule implements Rule
 		'__callstatic' => true,
 		'__invoke' => true,
 	];
+
+	public function __construct(
+		private InitializerExprTypeResolver $initializerExprTypeResolver,
+	)
+	{
+	}
 
 	public function getNodeType(): string
 	{
@@ -145,27 +156,20 @@ final class EnumSanityRule implements Rule
 			}
 			$caseName = $stmt->name->name;
 
-			if ($stmt->expr instanceof Node\Scalar\Int_ || $stmt->expr instanceof Node\Scalar\String_) {
-				if ($enumNode->scalarType === null) {
-					$errors[] = RuleErrorBuilder::message(sprintf(
-						'Enum %s is not backed, but case %s has value %s.',
-						$classReflection->getDisplayName(),
-						$caseName,
-						$stmt->expr->value,
-					))
-						->identifier('enum.caseWithValue')
-						->line($stmt->getStartLine())
-						->nonIgnorable()
-						->build();
-				} else {
-					$caseValue = $stmt->expr->value;
-
-					if (!isset($enumCases[$caseValue])) {
-						$enumCases[$caseValue] = [];
-					}
-
-					$enumCases[$caseValue][] = $caseName;
-				}
+			if ($enumNode->scalarType === null && $stmt->expr !== null) {
+				$errors[] = RuleErrorBuilder::message(sprintf(
+					'Enum %s is not backed, but case %s has value %s.',
+					$classReflection->getDisplayName(),
+					$caseName,
+					$this->initializerExprTypeResolver->getType(
+						$stmt->expr,
+						InitializerExprContext::fromScope($scope),
+					)->describe(VerbosityLevel::value()),
+				))
+					->identifier('enum.caseWithValue')
+					->line($stmt->getStartLine())
+					->nonIgnorable()
+					->build();
 			}
 
 			if ($enumNode->scalarType === null) {
@@ -189,6 +193,20 @@ final class EnumSanityRule implements Rule
 			$exprType = $scope->getType($stmt->expr);
 			$scalarType = $enumNode->scalarType->toLowerString() === 'int' ? new IntegerType() : new StringType();
 			if ($scalarType->isSuperTypeOf($exprType)->yes()) {
+				$constantValues = $exprType->getConstantScalarValues();
+				if (count($constantValues) === 1) {
+					$caseValue = $constantValues[0];
+					if (!is_string($caseValue) && !is_int($caseValue)) {
+						throw new ShouldNotHappenException();
+					}
+
+					if (!isset($enumCases[$caseValue])) {
+						$enumCases[$caseValue] = [];
+					}
+
+					$enumCases[$caseValue][] = $caseName;
+				}
+
 				continue;
 			}
 
