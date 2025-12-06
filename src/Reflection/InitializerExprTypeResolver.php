@@ -1008,8 +1008,20 @@ final class InitializerExprTypeResolver
 			$rightType = $this->optimizeScalarType($rightType);
 		}
 
-		if ($leftType->isString()->yes() && $rightType->isString()->yes()) {
+		if ($leftType instanceof MixedType && $rightType instanceof MixedType) {
+			return new BenevolentUnionType([new IntegerType(), new StringType()]);
+		}
+
+		$leftIsString = $leftType->isString();
+		$rightIsString = $rightType->isString();
+		if (
+			($leftIsString->yes() || $leftType instanceof MixedType)
+			&& ($rightIsString->yes() || $rightType instanceof MixedType)
+		) {
 			return new StringType();
+		}
+		if ($leftIsString->maybe() && $rightIsString->maybe()) {
+			return new ErrorType();
 		}
 
 		$leftNumberType = $leftType->toNumber();
@@ -1082,8 +1094,20 @@ final class InitializerExprTypeResolver
 			$rightType = $this->optimizeScalarType($rightType);
 		}
 
-		if ($leftType->isString()->yes() && $rightType->isString()->yes()) {
+		if ($leftType instanceof MixedType && $rightType instanceof MixedType) {
+			return new BenevolentUnionType([new IntegerType(), new StringType()]);
+		}
+
+		$leftIsString = $leftType->isString();
+		$rightIsString = $rightType->isString();
+		if (
+			($leftIsString->yes() || $leftType instanceof MixedType)
+			&& ($rightIsString->yes() || $rightType instanceof MixedType)
+		) {
 			return new StringType();
+		}
+		if ($leftIsString->maybe() && $rightIsString->maybe()) {
+			return new ErrorType();
 		}
 
 		if (TypeCombinator::union($leftType->toNumber(), $rightType->toNumber()) instanceof ErrorType) {
@@ -1146,8 +1170,20 @@ final class InitializerExprTypeResolver
 			$rightType = $this->optimizeScalarType($rightType);
 		}
 
-		if ($leftType->isString()->yes() && $rightType->isString()->yes()) {
+		if ($leftType instanceof MixedType && $rightType instanceof MixedType) {
+			return new BenevolentUnionType([new IntegerType(), new StringType()]);
+		}
+
+		$leftIsString = $leftType->isString();
+		$rightIsString = $rightType->isString();
+		if (
+			($leftIsString->yes() || $leftType instanceof MixedType)
+			&& ($rightIsString->yes() || $rightType instanceof MixedType)
+		) {
 			return new StringType();
+		}
+		if ($leftIsString->maybe() && $rightIsString->maybe()) {
+			return new ErrorType();
 		}
 
 		if (TypeCombinator::union($leftType->toNumber(), $rightType->toNumber()) instanceof ErrorType) {
