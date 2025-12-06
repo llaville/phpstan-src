@@ -6,12 +6,14 @@ use PhpParser\Node\Expr\FuncCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\Reflection\FunctionReflection;
+use PHPStan\TrinaryLogic;
 use PHPStan\Type\Constant\ConstantIntegerType;
 use PHPStan\Type\DynamicFunctionReturnTypeExtension;
+use PHPStan\Type\IntegerRangeType;
 use PHPStan\Type\Type;
 use function count;
 use function in_array;
-use const COUNT_RECURSIVE;
+use const COUNT_NORMAL;
 
 #[AutowiredService]
 final class CountFunctionReturnTypeExtension implements DynamicFunctionReturnTypeExtension
@@ -28,18 +30,31 @@ final class CountFunctionReturnTypeExtension implements DynamicFunctionReturnTyp
 		Scope $scope,
 	): ?Type
 	{
-		if (count($functionCall->getArgs()) < 1) {
+		$args = $functionCall->getArgs();
+		if (count($args) < 1) {
 			return null;
 		}
 
-		if (count($functionCall->getArgs()) > 1) {
-			$mode = $scope->getType($functionCall->getArgs()[1]->value);
-			if ($mode->isSuperTypeOf(new ConstantIntegerType(COUNT_RECURSIVE))->yes()) {
-				return null;
+		$arrayType = $scope->getType($args[0]->value);
+		if (!$this->isNormalCount($functionCall, $arrayType, $scope)->yes()) {
+			if ($arrayType->isIterableAtLeastOnce()->yes()) {
+				return IntegerRangeType::fromInterval(1, null);
 			}
+			return null;
 		}
 
-		return $scope->getType($functionCall->getArgs()[0]->value)->getArraySize();
+		return $scope->getType($args[0]->value)->getArraySize();
+	}
+
+	private function isNormalCount(FuncCall $countFuncCall, Type $countedType, Scope $scope): TrinaryLogic
+	{
+		if (count($countFuncCall->getArgs()) === 1) {
+			$isNormalCount = TrinaryLogic::createYes();
+		} else {
+			$mode = $scope->getType($countFuncCall->getArgs()[1]->value);
+			$isNormalCount = (new ConstantIntegerType(COUNT_NORMAL))->isSuperTypeOf($mode)->result->or($countedType->getIterableValueType()->isArray()->negate());
+		}
+		return $isNormalCount;
 	}
 
 }

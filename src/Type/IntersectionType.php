@@ -680,7 +680,22 @@ class IntersectionType implements CompoundType
 
 	public function getArraySize(): Type
 	{
-		return $this->intersectTypes(static fn (Type $type): Type => $type->getArraySize());
+		$arraySize = $this->intersectTypes(static fn (Type $type): Type => $type->getArraySize());
+
+		$knownOffsets = [];
+		foreach ($this->types as $type) {
+			if (!($type instanceof HasOffsetValueType) && !($type instanceof HasOffsetType)) {
+				continue;
+			}
+
+			$knownOffsets[$type->getOffsetType()->getValue()] = true;
+		}
+
+		if ($knownOffsets !== []) {
+			return TypeCombinator::intersect($arraySize, IntegerRangeType::fromInterval(count($knownOffsets), null));
+		}
+
+		return $arraySize;
 	}
 
 	public function getIterableKeyType(): Type
