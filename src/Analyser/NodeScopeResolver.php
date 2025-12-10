@@ -2553,7 +2553,7 @@ final class NodeScopeResolver
 
 		$existingExprResult = $storage->findResult($expr);
 		if ($existingExprResult !== null) {
-			if ($nodeCallback instanceof NoopNodeCallback) {
+			if ($nodeCallback instanceof ShallowNodeCallback) {
 				return $existingExprResult;
 			}
 			throw new ShouldNotHappenException(sprintf('Expr %s on line %d has already been analysed', get_class($expr), $expr->getStartLine()));
@@ -6404,13 +6404,7 @@ final class NodeScopeResolver
 			$stmt,
 			$var,
 			$assignedExpr,
-			static function (Node $node, Scope $scope) use ($nodeCallback): void {
-				if (!$node instanceof PropertyAssignNode && !$node instanceof VariableAssignNode) {
-					return;
-				}
-
-				$nodeCallback($node, $scope);
-			},
+			new VirtualAssignNodeCallback($nodeCallback),
 			ExpressionContext::createDeep(),
 			static fn (MutatingScope $scope): ExpressionResult => new ExpressionResult($scope, false, false, [], []),
 			false,

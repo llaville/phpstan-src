@@ -2,10 +2,12 @@
 
 namespace PHPStan\Analyser;
 
-final class NoopNodeCallback
+use PhpParser\Node;
+
+final class NoopNodeCallback implements ShallowNodeCallback
 {
 
-	public function __invoke(): void
+	public function __invoke(Node $node, Scope $scope): void
 	{
 		// noop
 	}
