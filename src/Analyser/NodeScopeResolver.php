@@ -6198,12 +6198,6 @@ final class NodeScopeResolver
 					$itemScope = $keyResult->getScope();
 				}
 
-				$valueResult = $this->processExprNode($stmt, $arrayItem->value, $itemScope, $nodeCallback, $context->enterDeep());
-				$hasYield = $hasYield || $valueResult->hasYield();
-				$throwPoints = array_merge($throwPoints, $valueResult->getThrowPoints());
-				$impurePoints = array_merge($impurePoints, $valueResult->getImpurePoints());
-				$isAlwaysTerminating = $isAlwaysTerminating || $valueResult->isAlwaysTerminating();
-
 				if ($arrayItem->key === null) {
 					$dimExpr = new Node\Scalar\Int_($i);
 				} else {
