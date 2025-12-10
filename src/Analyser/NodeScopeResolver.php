@@ -3900,6 +3900,13 @@ final class NodeScopeResolver
 			|| $expr instanceof Expr\PreDec
 			|| $expr instanceof Expr\PostDec
 		) {
+			$result = $this->processExprNode($stmt, $expr->var, $scope, $nodeCallback, $context->enterDeep());
+			$scope = $result->getScope();
+			$hasYield = $result->hasYield();
+			$throwPoints = $result->getThrowPoints();
+			$impurePoints = $result->getImpurePoints();
+			$isAlwaysTerminating = $result->isAlwaysTerminating();
+
 			$newExpr = $expr;
 			if ($expr instanceof Expr\PostInc) {
 				$newExpr = new Expr\PreInc($expr->var);
@@ -3907,18 +3914,13 @@ final class NodeScopeResolver
 				$newExpr = new Expr\PreDec($expr->var);
 			}
 
-			$result = $this->processVirtualAssign(
+			$scope = $this->processVirtualAssign(
 				$scope,
 				$stmt,
 				$expr->var,
 				$newExpr,
 				$nodeCallback,
-			);
-			$scope = $result->getScope();
-			$hasYield = $result->hasYield();
-			$throwPoints = $result->getThrowPoints();
-			$impurePoints = $result->getImpurePoints();
-			$isAlwaysTerminating = $result->isAlwaysTerminating();
+			)->getScope();
 		} elseif ($expr instanceof Ternary) {
 			$ternaryCondResult = $this->processExprNode($stmt, $expr->cond, $scope, $nodeCallback, $context->enterDeep());
 			$throwPoints = $ternaryCondResult->getThrowPoints();
