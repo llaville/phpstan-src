@@ -238,6 +238,7 @@ extensions:
 	autowiredAttributeServices: PHPStan\DependencyInjection\AutowiredAttributeServicesExtension
 	validateServiceTags: PHPStan\DependencyInjection\ValidateServiceTagsExtension
 	gnsr: PHPStan\DependencyInjection\GnsrExtension
+	fnsr: PHPStan\DependencyInjection\FnsrExtension
 
 autowiredAttributeServices:
 	level: null

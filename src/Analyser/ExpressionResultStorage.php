@@ -2,7 +2,9 @@
 
 namespace PHPStan\Analyser;
 
+use Fiber;
 use PhpParser\Node\Expr;
+use PHPStan\Analyser\Fiber\ExpressionAnalysisRequest;
 use SplObjectStorage;
 
 final class ExpressionResultStorage
@@ -10,6 +12,9 @@ final class ExpressionResultStorage
 
 	/** @var SplObjectStorage<Expr, ExpressionResult> */
 	private SplObjectStorage $results;
+
+	/** @var array<array{fiber: Fiber<mixed, ExpressionResult, null, ExpressionAnalysisRequest>, request: ExpressionAnalysisRequest}> */
+	public array $pendingFibers = [];
 
 	public function __construct()
 	{

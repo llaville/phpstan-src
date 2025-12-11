@@ -2,7 +2,19 @@
 
 namespace PHPStan\Analyser\Fiber;
 
+use PHPStan\Analyser\NodeScopeResolver;
+use PHPStan\DependencyInjection\Type\DynamicThrowTypeExtensionProvider;
+use PHPStan\DependencyInjection\Type\ParameterClosureThisExtensionProvider;
+use PHPStan\DependencyInjection\Type\ParameterClosureTypeExtensionProvider;
+use PHPStan\DependencyInjection\Type\ParameterOutTypeExtensionProvider;
+use PHPStan\File\FileHelper;
+use PHPStan\Php\PhpVersion;
+use PHPStan\PhpDoc\PhpDocInheritanceResolver;
+use PHPStan\Reflection\ClassReflectionFactory;
+use PHPStan\Reflection\InitializerExprTypeResolver;
+use PHPStan\Rules\Properties\ReadWritePropertiesExtensionProvider;
 use PHPStan\Testing\TypeInferenceTestCase;
+use PHPStan\Type\FileTypeMapper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 
@@ -26,6 +38,40 @@ class FiberNodeScopeResolverTest extends TypeInferenceTestCase
 	): void
 	{
 		$this->assertFileAsserts($assertType, $file, ...$args);
+	}
+
+	protected static function createNodeScopeResolver(): NodeScopeResolver
+	{
+		$container = self::getContainer();
+		$reflectionProvider = self::createReflectionProvider();
+		$typeSpecifier = $container->getService('typeSpecifier');
+
+		return new FiberNodeScopeResolver(
+			$reflectionProvider,
+			$container->getByType(InitializerExprTypeResolver::class),
+			self::getReflector(),
+			$container->getByType(ClassReflectionFactory::class),
+			$container->getByType(ParameterOutTypeExtensionProvider::class),
+			self::getParser(),
+			$container->getByType(FileTypeMapper::class),
+			$container->getByType(PhpVersion::class),
+			$container->getByType(PhpDocInheritanceResolver::class),
+			$container->getByType(FileHelper::class),
+			$typeSpecifier,
+			$container->getByType(DynamicThrowTypeExtensionProvider::class),
+			$container->getByType(ReadWritePropertiesExtensionProvider::class),
+			$container->getByType(ParameterClosureThisExtensionProvider::class),
+			$container->getByType(ParameterClosureTypeExtensionProvider::class),
+			self::createScopeFactory($reflectionProvider, $typeSpecifier),
+			$container->getParameter('polluteScopeWithLoopInitialAssignments'),
+			$container->getParameter('polluteScopeWithAlwaysIterableForeach'),
+			$container->getParameter('polluteScopeWithBlock'),
+			static::getEarlyTerminatingMethodCalls(),
+			static::getEarlyTerminatingFunctionCalls(),
+			$container->getParameter('exceptions')['implicitThrows'],
+			$container->getParameter('treatPhpDocTypesAsCertain'),
+			$container->getParameter('narrowMethodScopeFromConstructor'),
+		);
 	}
 
 	public static function getAdditionalConfigFiles(): array

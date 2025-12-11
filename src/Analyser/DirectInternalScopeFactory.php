@@ -3,6 +3,7 @@
 namespace PHPStan\Analyser;
 
 use PhpParser\Node;
+use PHPStan\Analyser\Fiber\FiberScope;
 use PHPStan\DependencyInjection\Type\DynamicReturnTypeExtensionRegistryProvider;
 use PHPStan\DependencyInjection\Type\ExpressionTypeResolverExtensionRegistryProvider;
 use PHPStan\Node\Printer\ExprPrinter;
@@ -38,6 +39,7 @@ final class DirectInternalScopeFactory implements InternalScopeFactory
 		private int|array|null $configPhpVersion,
 		private $nodeCallback,
 		private ConstantResolver $constantResolver,
+		private bool $fiber = false,
 	)
 	{
 	}
@@ -61,7 +63,12 @@ final class DirectInternalScopeFactory implements InternalScopeFactory
 		bool $nativeTypesPromoted = false,
 	): MutatingScope
 	{
-		return new MutatingScope(
+		$className = MutatingScope::class;
+		if ($this->fiber) {
+			$className = FiberScope::class;
+		}
+
+		return new $className(
 			$this,
 			$this->reflectionProvider,
 			$this->initializerExprTypeResolver,
@@ -94,6 +101,50 @@ final class DirectInternalScopeFactory implements InternalScopeFactory
 			$afterExtractCall,
 			$parentScope,
 			$nativeTypesPromoted,
+		);
+	}
+
+	public function toFiberFactory(): InternalScopeFactory
+	{
+		return new self(
+			$this->reflectionProvider,
+			$this->initializerExprTypeResolver,
+			$this->dynamicReturnTypeExtensionRegistryProvider,
+			$this->expressionTypeResolverExtensionRegistryProvider,
+			$this->exprPrinter,
+			$this->typeSpecifier,
+			$this->propertyReflectionFinder,
+			$this->parser,
+			$this->nodeScopeResolver,
+			$this->richerScopeGetTypeHelper,
+			$this->phpVersion,
+			$this->attributeReflectionFactory,
+			$this->configPhpVersion,
+			$this->nodeCallback,
+			$this->constantResolver,
+			true,
+		);
+	}
+
+	public function toMutatingFactory(): InternalScopeFactory
+	{
+		return new self(
+			$this->reflectionProvider,
+			$this->initializerExprTypeResolver,
+			$this->dynamicReturnTypeExtensionRegistryProvider,
+			$this->expressionTypeResolverExtensionRegistryProvider,
+			$this->exprPrinter,
+			$this->typeSpecifier,
+			$this->propertyReflectionFinder,
+			$this->parser,
+			$this->nodeScopeResolver,
+			$this->richerScopeGetTypeHelper,
+			$this->phpVersion,
+			$this->attributeReflectionFactory,
+			$this->configPhpVersion,
+			$this->nodeCallback,
+			$this->constantResolver,
+			false,
 		);
 	}
 

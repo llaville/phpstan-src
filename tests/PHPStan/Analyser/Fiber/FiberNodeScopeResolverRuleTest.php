@@ -3,11 +3,24 @@
 namespace PHPStan\Analyser\Fiber;
 
 use PhpParser\Node;
+use PHPStan\Analyser\NodeScopeResolver;
 use PHPStan\Analyser\Scope;
+use PHPStan\DependencyInjection\Type\DynamicThrowTypeExtensionProvider;
+use PHPStan\DependencyInjection\Type\ParameterClosureThisExtensionProvider;
+use PHPStan\DependencyInjection\Type\ParameterClosureTypeExtensionProvider;
+use PHPStan\DependencyInjection\Type\ParameterOutTypeExtensionProvider;
+use PHPStan\File\FileHelper;
+use PHPStan\Php\PhpVersion;
+use PHPStan\PhpDoc\PhpDocInheritanceResolver;
+use PHPStan\Reflection\ClassReflectionFactory;
+use PHPStan\Reflection\InitializerExprTypeResolver;
 use PHPStan\Rules\IdentifierRuleError;
+use PHPStan\Rules\Properties\DirectReadWritePropertiesExtensionProvider;
+use PHPStan\Rules\Properties\ReadWritePropertiesExtensionProvider;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Testing\RuleTestCase;
+use PHPStan\Type\FileTypeMapper;
 use PHPStan\Type\VerbosityLevel;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhp;
@@ -92,6 +105,40 @@ class FiberNodeScopeResolverRuleTest extends RuleTestCase
 				['\'bar\'', 21],
 			],
 		];
+	}
+
+	protected function createNodeScopeResolver(): NodeScopeResolver
+	{
+		$readWritePropertiesExtensions = $this->getReadWritePropertiesExtensions();
+		$reflectionProvider = $this->createReflectionProvider();
+		$typeSpecifier = $this->getTypeSpecifier();
+
+		return new FiberNodeScopeResolver(
+			$reflectionProvider,
+			self::getContainer()->getByType(InitializerExprTypeResolver::class),
+			self::getReflector(),
+			self::getContainer()->getByType(ClassReflectionFactory::class),
+			self::getContainer()->getByType(ParameterOutTypeExtensionProvider::class),
+			$this->getParser(),
+			self::getContainer()->getByType(FileTypeMapper::class),
+			self::getContainer()->getByType(PhpVersion::class),
+			self::getContainer()->getByType(PhpDocInheritanceResolver::class),
+			self::getContainer()->getByType(FileHelper::class),
+			$typeSpecifier,
+			self::getContainer()->getByType(DynamicThrowTypeExtensionProvider::class),
+			$readWritePropertiesExtensions !== [] ? new DirectReadWritePropertiesExtensionProvider($readWritePropertiesExtensions) : self::getContainer()->getByType(ReadWritePropertiesExtensionProvider::class),
+			self::getContainer()->getByType(ParameterClosureThisExtensionProvider::class),
+			self::getContainer()->getByType(ParameterClosureTypeExtensionProvider::class),
+			self::createScopeFactory($reflectionProvider, $typeSpecifier),
+			$this->shouldPolluteScopeWithLoopInitialAssignments(),
+			$this->shouldPolluteScopeWithAlwaysIterableForeach(),
+			self::getContainer()->getParameter('polluteScopeWithBlock'),
+			[],
+			[],
+			self::getContainer()->getParameter('exceptions')['implicitThrows'],
+			$this->shouldTreatPhpDocTypesAsCertain(),
+			self::getContainer()->getParameter('narrowMethodScopeFromConstructor'),
+		);
 	}
 
 	/**

@@ -3,6 +3,7 @@
 namespace PHPStan\Analyser;
 
 use PhpParser\Node;
+use PHPStan\Analyser\Fiber\FiberScope;
 use PHPStan\DependencyInjection\Container;
 use PHPStan\DependencyInjection\GenerateFactory;
 use PHPStan\DependencyInjection\Type\DynamicReturnTypeExtensionRegistryProvider;
@@ -29,6 +30,7 @@ final class LazyInternalScopeFactory implements InternalScopeFactory
 	public function __construct(
 		private Container $container,
 		private $nodeCallback,
+		private bool $fiber = false,
 	)
 	{
 		$this->phpVersion = $this->container->getParameter('phpVersion');
@@ -53,7 +55,12 @@ final class LazyInternalScopeFactory implements InternalScopeFactory
 		bool $nativeTypesPromoted = false,
 	): MutatingScope
 	{
-		return new MutatingScope(
+		$className = MutatingScope::class;
+		if ($this->fiber) {
+			$className = FiberScope::class;
+		}
+
+		return new $className(
 			$this,
 			$this->container->getByType(ReflectionProvider::class),
 			$this->container->getByType(InitializerExprTypeResolver::class),
@@ -87,6 +94,16 @@ final class LazyInternalScopeFactory implements InternalScopeFactory
 			$parentScope,
 			$nativeTypesPromoted,
 		);
+	}
+
+	public function toFiberFactory(): InternalScopeFactory
+	{
+		return new self($this->container, $this->nodeCallback, true);
+	}
+
+	public function toMutatingFactory(): InternalScopeFactory
+	{
+		return new self($this->container, $this->nodeCallback, false);
 	}
 
 }
