@@ -5747,6 +5747,14 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			$descriptions[$key] = $nativeTypeHolder->getType()->describe(VerbosityLevel::precise());
 		}
 
+		foreach (array_keys($this->currentlyAssignedExpressions) as $exprString) {
+			$descriptions[sprintf('currently assigned %s', $exprString)] = 'true';
+		}
+
+		foreach (array_keys($this->currentlyAllowedUndefinedExpressions) as $exprString) {
+			$descriptions[sprintf('currently allowed undefined %s', $exprString)] = 'true';
+		}
+
 		foreach ($this->conditionalExpressions as $exprString => $holders) {
 			foreach (array_values($holders) as $i => $holder) {
 				$key = sprintf('condition about %s #%d', $exprString, $i + 1);
