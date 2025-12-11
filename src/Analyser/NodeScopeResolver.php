@@ -4090,6 +4090,7 @@ final class NodeScopeResolver
 			$hasDefaultCond = false;
 			$hasAlwaysTrueCond = false;
 			$arms = $expr->arms;
+			$armCondsToSkip = [];
 			if ($condType->isEnum()->yes()) {
 				// enum match analysis would work even without this if branch
 				// but would be much slower
@@ -4110,7 +4111,7 @@ final class NodeScopeResolver
 						$condNodes = [];
 						$conditionCases = [];
 						$conditionExprs = [];
-						foreach ($arm->conds as $cond) {
+						foreach ($arm->conds as $j => $cond) {
 							if (!$cond instanceof Expr\ClassConstFetch) {
 								continue 2;
 							}
@@ -4170,6 +4171,7 @@ final class NodeScopeResolver
 							$conditionExprs[] = $cond;
 
 							unset($unusedIndexedEnumCases[$loweredFetchedClassName][$caseName]);
+							$armCondsToSkip[$i][$j] = true;
 						}
 
 						$conditionCasesCount = count($conditionCases);
@@ -4246,7 +4248,10 @@ final class NodeScopeResolver
 				$filteringExprs = [];
 				$armCondScope = $matchScope;
 				$condNodes = [];
-				foreach ($arm->conds as $armCond) {
+				foreach ($arm->conds as $j => $armCond) {
+					if (isset($armCondsToSkip[$i][$j])) {
+						continue;
+					}
 					$condNodes[] = new MatchExpressionArmCondition($armCond, $armCondScope, $armCond->getStartLine());
 					$armCondResult = $this->processExprNode($stmt, $armCond, $armCondScope, $storage, $nodeCallback, $deepContext);
 					$hasYield = $hasYield || $armCondResult->hasYield();
