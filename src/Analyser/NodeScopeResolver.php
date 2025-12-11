@@ -4332,7 +4332,7 @@ final class NodeScopeResolver
 			$impurePoints = $result->getImpurePoints();
 			$isAlwaysTerminating = false;
 			if ($expr->getName() instanceof Expr) {
-				$nameResult = $this->processExprNode($stmt, $expr->getVar(), $scope, $storage, $nodeCallback, ExpressionContext::createDeep());
+				$nameResult = $this->processExprNode($stmt, $expr->getName(), $scope, $storage, $nodeCallback, ExpressionContext::createDeep());
 				$scope = $nameResult->getScope();
 				$hasYield = $hasYield || $nameResult->hasYield();
 				$throwPoints = array_merge($throwPoints, $nameResult->getThrowPoints());
