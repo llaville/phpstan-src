@@ -4272,8 +4272,7 @@ final class NodeScopeResolver
 				}
 
 				$filteringExpr = $this->getFilteringExprForMatchArm($expr, $filteringExprs);
-
-				$bodyScope = $this->processExprNode($stmt, $filteringExpr, $matchScope, $storage, new NoopNodeCallback(), $deepContext)->getTruthyScope();
+				$bodyScope = $matchScope->filterByTruthyValue($filteringExpr);
 				$matchArmBody = new MatchExpressionArmBody($bodyScope, $arm->body);
 				$armNodes[$i] = new MatchExpressionArm($matchArmBody, $condNodes, $arm->getStartLine());
 
