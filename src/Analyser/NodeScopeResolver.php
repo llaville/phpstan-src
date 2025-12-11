@@ -5731,6 +5731,7 @@ final class NodeScopeResolver
 						new TypeExpr($byRefType),
 						$nodeCallback,
 					)->getScope();
+					$scope = $this->lookForUnsetAllowedUndefinedExpressions($scope, $argValue);
 				}
 			} elseif ($calleeReflection !== null && $calleeReflection->hasSideEffects()->yes()) {
 				$argType = $scope->getType($arg->value);
