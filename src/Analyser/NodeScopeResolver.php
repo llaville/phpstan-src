@@ -3186,24 +3186,12 @@ final class NodeScopeResolver
 			$impurePoints = [];
 			$isAlwaysTerminating = false;
 			if ($expr->class instanceof Expr) {
-				$objectClasses = $scope->getType($expr->class)->getObjectClassNames();
-				if (count($objectClasses) !== 1) {
-					$objectClasses = $scope->getType(new New_($expr->class))->getObjectClassNames();
-				}
-				if (count($objectClasses) === 1) {
-					$objectExprResult = $this->processExprNode($stmt, new StaticCall(new Name($objectClasses[0]), $expr->name, []), $scope, $storage, new NoopNodeCallback(), $context->enterDeep());
-					$additionalThrowPoints = $objectExprResult->getThrowPoints();
-				} else {
-					$additionalThrowPoints = [InternalThrowPoint::createImplicit($scope, $expr)];
-				}
 				$classResult = $this->processExprNode($stmt, $expr->class, $scope, $storage, $nodeCallback, $context->enterDeep());
 				$hasYield = $classResult->hasYield();
 				$throwPoints = array_merge($throwPoints, $classResult->getThrowPoints());
 				$impurePoints = array_merge($impurePoints, $classResult->getImpurePoints());
 				$isAlwaysTerminating = $classResult->isAlwaysTerminating();
-				foreach ($additionalThrowPoints as $throwPoint) {
-					$throwPoints[] = $throwPoint;
-				}
+
 				$scope = $classResult->getScope();
 			}
 
@@ -3276,6 +3264,22 @@ final class NodeScopeResolver
 					}
 				} else {
 					$throwPoints[] = InternalThrowPoint::createImplicit($scope, $expr);
+				}
+			}
+
+			if ($expr->class instanceof Expr) {
+				$objectClasses = $scope->getType($expr->class)->getObjectClassNames();
+				if (count($objectClasses) !== 1) {
+					$objectClasses = $scope->getType(new New_($expr->class))->getObjectClassNames();
+				}
+				if (count($objectClasses) === 1) {
+					$objectExprResult = $this->processExprNode($stmt, new StaticCall(new Name($objectClasses[0]), $expr->name, []), $scope, $storage, new NoopNodeCallback(), $context->enterDeep());
+					$additionalThrowPoints = $objectExprResult->getThrowPoints();
+				} else {
+					$additionalThrowPoints = [InternalThrowPoint::createImplicit($scope, $expr)];
+				}
+				foreach ($additionalThrowPoints as $throwPoint) {
+					$throwPoints[] = $throwPoint;
 				}
 			}
 
