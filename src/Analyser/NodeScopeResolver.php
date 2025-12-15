@@ -2774,25 +2774,26 @@ class NodeScopeResolver
 				);
 			}
 
+			$normalizedExpr = $expr;
 			if ($parametersAcceptor !== null) {
-				$expr = ArgumentsNormalizer::reorderFuncArguments($parametersAcceptor, $expr) ?? $expr;
+				$normalizedExpr = ArgumentsNormalizer::reorderFuncArguments($parametersAcceptor, $expr) ?? $expr;
 				$returnType = $parametersAcceptor->getReturnType();
 				$isAlwaysTerminating = $isAlwaysTerminating || $returnType instanceof NeverType && $returnType->isExplicit();
 			}
 
 			if (
-				$expr->name instanceof Name
+				$normalizedExpr->name instanceof Name
 				&& $functionReflection !== null
 				&& $functionReflection->getName() === 'clone'
-				&& count($expr->getArgs()) === 2
+				&& count($normalizedExpr->getArgs()) === 2
 			) {
-				$clonePropertiesArgType = $scope->getType($expr->getArgs()[1]->value);
-				$cloneExpr = new TypeExpr($scope->getType(new Expr\Clone_($expr->getArgs()[0]->value)));
+				$clonePropertiesArgType = $scope->getType($normalizedExpr->getArgs()[1]->value);
+				$cloneExpr = new TypeExpr($scope->getType(new Expr\Clone_($normalizedExpr->getArgs()[0]->value)));
 				$clonePropertiesArgTypeConstantArrays = $clonePropertiesArgType->getConstantArrays();
 				foreach ($clonePropertiesArgTypeConstantArrays as $clonePropertiesArgTypeConstantArray) {
 					foreach ($clonePropertiesArgTypeConstantArray->getKeyTypes() as $i => $clonePropertyKeyType) {
 						$clonePropertyKeyTypeScalars = $clonePropertyKeyType->getConstantScalarValues();
-						$propertyAttributes = $expr->getAttributes();
+						$propertyAttributes = $normalizedExpr->getAttributes();
 						$propertyAttributes['inCloneWith'] = true;
 						if (count($clonePropertyKeyTypeScalars) === 1) {
 							$this->processVirtualAssign(
@@ -2818,15 +2819,15 @@ class NodeScopeResolver
 				}
 			}
 
-			$result = $this->processArgs($stmt, $functionReflection, null, $parametersAcceptor, $expr, $scope, $storage, $nodeCallback, $context);
+			$result = $this->processArgs($stmt, $functionReflection, null, $parametersAcceptor, $normalizedExpr, $scope, $storage, $nodeCallback, $context);
 			$scope = $result->getScope();
 			$hasYield = $result->hasYield();
 			$throwPoints = array_merge($throwPoints, $result->getThrowPoints());
 			$impurePoints = array_merge($impurePoints, $result->getImpurePoints());
 			$isAlwaysTerminating = $isAlwaysTerminating || $result->isAlwaysTerminating();
 
-			if ($expr->name instanceof Expr) {
-				$nameType = $scope->getType($expr->name);
+			if ($normalizedExpr->name instanceof Expr) {
+				$nameType = $scope->getType($normalizedExpr->name);
 				if (
 					$nameType->isObject()->yes()
 					&& $nameType->isCallable()->yes()
@@ -2834,7 +2835,7 @@ class NodeScopeResolver
 				) {
 					$invokeResult = $this->processExprNode(
 						$stmt,
-						new MethodCall($expr->name, '__invoke', $expr->getArgs(), $expr->getAttributes()),
+						new MethodCall($normalizedExpr->name, '__invoke', $normalizedExpr->getArgs(), $normalizedExpr->getAttributes()),
 						$scope,
 						$storage,
 						new NoopNodeCallback(),
@@ -2847,7 +2848,7 @@ class NodeScopeResolver
 			}
 
 			if ($functionReflection !== null) {
-				$functionThrowPoint = $this->getFunctionThrowPoint($functionReflection, $parametersAcceptor, $expr, $scope);
+				$functionThrowPoint = $this->getFunctionThrowPoint($functionReflection, $parametersAcceptor, $normalizedExpr, $scope);
 				if ($functionThrowPoint !== null) {
 					$throwPoints[] = $functionThrowPoint;
 				}
@@ -2875,18 +2876,18 @@ class NodeScopeResolver
 			if (
 				$functionReflection !== null
 				&& $functionReflection->getName() === 'file_put_contents'
-				&& count($expr->getArgs()) > 0
+				&& count($normalizedExpr->getArgs()) > 0
 			) {
-				$scope = $scope->invalidateExpression(new FuncCall(new Name('file_get_contents'), [$expr->getArgs()[0]]))
-					->invalidateExpression(new FuncCall(new Name\FullyQualified('file_get_contents'), [$expr->getArgs()[0]]));
+				$scope = $scope->invalidateExpression(new FuncCall(new Name('file_get_contents'), [$normalizedExpr->getArgs()[0]]))
+					->invalidateExpression(new FuncCall(new Name\FullyQualified('file_get_contents'), [$normalizedExpr->getArgs()[0]]));
 			}
 
 			if (
 				$functionReflection !== null
 				&& in_array($functionReflection->getName(), ['array_pop', 'array_shift'], true)
-				&& count($expr->getArgs()) >= 1
+				&& count($normalizedExpr->getArgs()) >= 1
 			) {
-				$arrayArg = $expr->getArgs()[0]->value;
+				$arrayArg = $normalizedExpr->getArgs()[0]->value;
 
 				$arrayArgType = $scope->getType($arrayArg);
 				$arrayArgNativeType = $scope->getNativeType($arrayArg);
@@ -2908,9 +2909,9 @@ class NodeScopeResolver
 			if (
 				$functionReflection !== null
 				&& in_array($functionReflection->getName(), ['array_push', 'array_unshift'], true)
-				&& count($expr->getArgs()) >= 2
+				&& count($normalizedExpr->getArgs()) >= 2
 			) {
-				$arrayArg = $expr->getArgs()[0]->value;
+				$arrayArg = $normalizedExpr->getArgs()[0]->value;
 
 				$scope = $this->processVirtualAssign(
 					$scope,
@@ -2918,8 +2919,8 @@ class NodeScopeResolver
 					$stmt,
 					$arrayArg,
 					new NativeTypeExpr(
-						$this->getArrayFunctionAppendingType($functionReflection, $scope, $expr),
-						$this->getArrayFunctionAppendingType($functionReflection, $scope->doNotTreatPhpDocTypesAsCertain(), $expr),
+						$this->getArrayFunctionAppendingType($functionReflection, $scope, $normalizedExpr),
+						$this->getArrayFunctionAppendingType($functionReflection, $scope->doNotTreatPhpDocTypesAsCertain(), $normalizedExpr),
 					),
 					$nodeCallback,
 				)->getScope();
@@ -2936,7 +2937,7 @@ class NodeScopeResolver
 				$functionReflection !== null
 				&& $functionReflection->getName() === 'shuffle'
 			) {
-				$arrayArg = $expr->getArgs()[0]->value;
+				$arrayArg = $normalizedExpr->getArgs()[0]->value;
 
 				$scope = $this->processVirtualAssign(
 					$scope,
@@ -2951,15 +2952,15 @@ class NodeScopeResolver
 			if (
 				$functionReflection !== null
 				&& $functionReflection->getName() === 'array_splice'
-				&& count($expr->getArgs()) >= 2
+				&& count($normalizedExpr->getArgs()) >= 2
 			) {
-				$arrayArg = $expr->getArgs()[0]->value;
+				$arrayArg = $normalizedExpr->getArgs()[0]->value;
 				$arrayArgType = $scope->getType($arrayArg);
 				$arrayArgNativeType = $scope->getNativeType($arrayArg);
 
-				$offsetType = $scope->getType($expr->getArgs()[1]->value);
-				$lengthType = isset($expr->getArgs()[2]) ? $scope->getType($expr->getArgs()[2]->value) : new NullType();
-				$replacementType = isset($expr->getArgs()[3]) ? $scope->getType($expr->getArgs()[3]->value) : new ConstantArrayType([], []);
+				$offsetType = $scope->getType($normalizedExpr->getArgs()[1]->value);
+				$lengthType = isset($normalizedExpr->getArgs()[2]) ? $scope->getType($normalizedExpr->getArgs()[2]->value) : new NullType();
+				$replacementType = isset($normalizedExpr->getArgs()[3]) ? $scope->getType($normalizedExpr->getArgs()[3]->value) : new ConstantArrayType([], []);
 
 				$scope = $this->processVirtualAssign(
 					$scope,
@@ -2977,9 +2978,9 @@ class NodeScopeResolver
 			if (
 				$functionReflection !== null
 				&& in_array($functionReflection->getName(), ['sort', 'rsort', 'usort'], true)
-				&& count($expr->getArgs()) >= 1
+				&& count($normalizedExpr->getArgs()) >= 1
 			) {
-				$arrayArg = $expr->getArgs()[0]->value;
+				$arrayArg = $normalizedExpr->getArgs()[0]->value;
 
 				$scope = $this->processVirtualAssign(
 					$scope,
@@ -2994,9 +2995,9 @@ class NodeScopeResolver
 			if (
 				$functionReflection !== null
 				&& in_array($functionReflection->getName(), ['natcasesort', 'natsort', 'arsort', 'asort', 'ksort', 'krsort', 'uasort', 'uksort'], true)
-				&& count($expr->getArgs()) >= 1
+				&& count($normalizedExpr->getArgs()) >= 1
 			) {
-				$arrayArg = $expr->getArgs()[0]->value;
+				$arrayArg = $normalizedExpr->getArgs()[0]->value;
 
 				$scope = $this->processVirtualAssign(
 					$scope,
@@ -3012,7 +3013,7 @@ class NodeScopeResolver
 				$functionReflection !== null
 				&& $functionReflection->getName() === 'extract'
 			) {
-				$extractedArg = $expr->getArgs()[0]->value;
+				$extractedArg = $normalizedExpr->getArgs()[0]->value;
 				$extractedType = $scope->getType($extractedArg);
 				$constantArrays = $extractedType->getConstantArrays();
 				if (count($constantArrays) > 0) {
@@ -3126,8 +3127,9 @@ class NodeScopeResolver
 				);
 			}
 
+			$normalizedExpr = $expr;
 			if ($parametersAcceptor !== null) {
-				$expr = ArgumentsNormalizer::reorderMethodArguments($parametersAcceptor, $expr) ?? $expr;
+				$normalizedExpr = ArgumentsNormalizer::reorderMethodArguments($parametersAcceptor, $expr) ?? $expr;
 				$returnType = $parametersAcceptor->getReturnType();
 				$isAlwaysTerminating = $returnType instanceof NeverType && $returnType->isExplicit();
 			}
@@ -3137,7 +3139,7 @@ class NodeScopeResolver
 				$methodReflection,
 				$methodReflection !== null ? $scope->getNakedMethod($calledOnType, $methodReflection->getName()) : null,
 				$parametersAcceptor,
-				$expr,
+				$normalizedExpr,
 				$scope,
 				$storage,
 				$nodeCallback,
@@ -3148,21 +3150,21 @@ class NodeScopeResolver
 			if ($methodReflection !== null) {
 				$hasSideEffects = $methodReflection->hasSideEffects();
 				if ($hasSideEffects->yes() || $methodReflection->getName() === '__construct') {
-					$this->callNodeCallback($nodeCallback, new InvalidateExprNode($expr->var), $scope, $storage);
-					$scope = $scope->invalidateExpression($expr->var, true);
+					$this->callNodeCallback($nodeCallback, new InvalidateExprNode($normalizedExpr->var), $scope, $storage);
+					$scope = $scope->invalidateExpression($normalizedExpr->var, true);
 				}
 				if ($parametersAcceptor !== null && !$methodReflection->isStatic()) {
 					$selfOutType = $methodReflection->getSelfOutType();
 					if ($selfOutType !== null) {
 						$scope = $scope->assignExpression(
-							$expr->var,
+							$normalizedExpr->var,
 							TemplateTypeHelper::resolveTemplateTypes(
 								$selfOutType,
 								$parametersAcceptor->getResolvedTemplateTypeMap(),
 								$parametersAcceptor instanceof ExtendedParametersAcceptor ? $parametersAcceptor->getCallSiteVarianceMap() : TemplateTypeVarianceMap::createEmpty(),
 								TemplateTypeVariance::createCovariant(),
 							),
-							$scope->getNativeType($expr->var),
+							$scope->getNativeType($normalizedExpr->var),
 						);
 					}
 				}
@@ -3327,12 +3329,13 @@ class NodeScopeResolver
 				);
 			}
 
+			$normalizedExpr = $expr;
 			if ($parametersAcceptor !== null) {
-				$expr = ArgumentsNormalizer::reorderStaticCallArguments($parametersAcceptor, $expr) ?? $expr;
+				$normalizedExpr = ArgumentsNormalizer::reorderStaticCallArguments($parametersAcceptor, $expr) ?? $expr;
 				$returnType = $parametersAcceptor->getReturnType();
 				$isAlwaysTerminating = $returnType instanceof NeverType && $returnType->isExplicit();
 			}
-			$result = $this->processArgs($stmt, $methodReflection, null, $parametersAcceptor, $expr, $scope, $storage, $nodeCallback, $context, $closureBindScope ?? null);
+			$result = $this->processArgs($stmt, $methodReflection, null, $parametersAcceptor, $normalizedExpr, $scope, $storage, $nodeCallback, $context, $closureBindScope ?? null);
 			$scope = $result->getScope();
 			$scopeFunction = $scope->getFunction();
 
@@ -3871,6 +3874,7 @@ class NodeScopeResolver
 			$impurePoints = [];
 			$isAlwaysTerminating = false;
 			$className = null;
+			$normalizedExpr = $expr;
 			if ($expr->class instanceof Expr || $expr->class instanceof Name) {
 				if ($expr->class instanceof Expr) {
 					$objectClasses = $scope->getType($expr)->getObjectClassNames();
@@ -3937,7 +3941,7 @@ class NodeScopeResolver
 				}
 
 				if ($parametersAcceptor !== null) {
-					$expr = ArgumentsNormalizer::reorderNewArguments($parametersAcceptor, $expr) ?? $expr;
+					$normalizedExpr = ArgumentsNormalizer::reorderNewArguments($parametersAcceptor, $expr) ?? $expr;
 				}
 
 			} else {
@@ -4001,7 +4005,7 @@ class NodeScopeResolver
 				}
 			}
 
-			$result = $this->processArgs($stmt, $constructorReflection, null, $parametersAcceptor, $expr, $scope, $storage, $nodeCallback, $context);
+			$result = $this->processArgs($stmt, $constructorReflection, null, $parametersAcceptor, $normalizedExpr, $scope, $storage, $nodeCallback, $context);
 			$scope = $result->getScope();
 			$hasYield = $hasYield || $result->hasYield();
 			$throwPoints = array_merge($throwPoints, $result->getThrowPoints());
