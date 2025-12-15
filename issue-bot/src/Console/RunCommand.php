@@ -20,6 +20,7 @@ use function file_put_contents;
 use function implode;
 use function is_file;
 use function microtime;
+use function putenv;
 use function serialize;
 use function sha1;
 use function sprintf;
@@ -111,6 +112,7 @@ class RunCommand extends Command
 		$output->writeln(sprintf('Starting analysis of %s', $hash));
 
 		$startTime = microtime(true);
+		putenv('PHPSTAN_FNSR=1');
 		exec(implode(' ', $commandArray), $outputLines, $exitCode);
 		$elapsedTime = microtime(true) - $startTime;
 		$output->writeln(sprintf('Analysis of %s took %.2f s', $hash, $elapsedTime));
