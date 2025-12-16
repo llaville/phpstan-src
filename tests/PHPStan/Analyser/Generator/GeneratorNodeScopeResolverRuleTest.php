@@ -158,11 +158,11 @@ class GeneratorNodeScopeResolverRuleTest extends RuleTestCase
 				];
 			},
 			[
-				['exit through', 666],
 				['Called on GeneratorNodeScopeResolverRule\\Foo, arg: 1', 21],
 				['exit through', 666],
 				['Virtual node invoked: \'foo\', 3', 23],
 				['Called on GeneratorNodeScopeResolverRule\\Foo, arg: \'foo\'', 23],
+				['exit through', 666],
 			],
 		];
 	}
