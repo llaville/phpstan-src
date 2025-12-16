@@ -868,11 +868,11 @@ class NodeScopeResolver
 
 					foreach ($gatheredReturnStatements as $statement) {
 						if ($finalScope === null) {
-							$finalScope = $statement->getScope();
+							$finalScope = $statement->getScope()->toMutatingScope();
 							continue;
 						}
 
-						$finalScope = $finalScope->mergeWith($statement->getScope());
+						$finalScope = $finalScope->mergeWith($statement->getScope()->toMutatingScope());
 					}
 
 					if ($finalScope !== null) {
