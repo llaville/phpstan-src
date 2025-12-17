@@ -2571,7 +2571,7 @@ class NodeScopeResolver
 			}
 
 			$newExprResult = $this->processExprNode($stmt, $newExpr, $scope, $storage, $nodeCallback, $context);
-			$storage->storeResult($expr, $newExprResult);
+			$this->storeResult($storage, $expr, $newExprResult);
 			return $newExprResult;
 		}
 
