@@ -3189,9 +3189,27 @@ class NodeScopeResolver
 			$impurePoints = array_merge($impurePoints, $result->getImpurePoints());
 			$isAlwaysTerminating = $isAlwaysTerminating || $result->isAlwaysTerminating();
 		} elseif ($expr instanceof Expr\NullsafeMethodCall) {
+			$this->processExprNode($stmt, new MethodCall(
+				$expr->var,
+				$expr->name,
+				$expr->args,
+			), $scope, $storage, new NoopNodeCallback(), $context);
+
 			$beforeScope = $scope;
 			$nonNullabilityResult = $this->ensureShallowNonNullability($scope, $scope, $expr->var);
-			$exprResult = $this->processExprNode($stmt, new MethodCall($expr->var, $expr->name, $expr->args, array_merge($expr->getAttributes(), ['virtualNullsafeMethodCall' => true])), $nonNullabilityResult->getScope(), $storage, $nodeCallback, $context);
+			$exprResult = $this->processExprNode(
+				$stmt,
+				new MethodCall(
+					$this->deepNodeCloner->cloneNode($expr->var),
+					$this->deepNodeCloner->cloneNode($expr->name),
+					array_map(fn ($node) => $this->deepNodeCloner->cloneNode($node), $expr->args),
+					array_merge($expr->getAttributes(), ['virtualNullsafeMethodCall' => true]),
+				),
+				$nonNullabilityResult->getScope(),
+				$storage,
+				$nodeCallback,
+				$context,
+			);
 			$scope = $this->revertNonNullability($exprResult->getScope(), $nonNullabilityResult->getSpecifiedExpressions());
 
 			$result = new ExpressionResult(
@@ -3405,9 +3423,18 @@ class NodeScopeResolver
 				}
 			}
 		} elseif ($expr instanceof Expr\NullsafePropertyFetch) {
+			$this->processExprNode($stmt, new PropertyFetch(
+				$expr->var,
+				$expr->name,
+			), $scope, $storage, new NoopNodeCallback(), $context);
+
 			$beforeScope = $scope;
 			$nonNullabilityResult = $this->ensureShallowNonNullability($scope, $scope, $expr->var);
-			$exprResult = $this->processExprNode($stmt, new PropertyFetch($expr->var, $expr->name, array_merge($expr->getAttributes(), ['virtualNullsafePropertyFetch' => true])), $nonNullabilityResult->getScope(), $storage, $nodeCallback, $context);
+			$exprResult = $this->processExprNode($stmt, new PropertyFetch(
+				$this->deepNodeCloner->cloneNode($expr->var),
+				$this->deepNodeCloner->cloneNode($expr->name),
+				array_merge($expr->getAttributes(), ['virtualNullsafePropertyFetch' => true]),
+			), $nonNullabilityResult->getScope(), $storage, $nodeCallback, $context);
 			$scope = $this->revertNonNullability($exprResult->getScope(), $nonNullabilityResult->getSpecifiedExpressions());
 
 			$result = new ExpressionResult(
