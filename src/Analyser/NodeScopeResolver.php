@@ -3645,9 +3645,10 @@ class NodeScopeResolver
 			$this->storeResult($storage, $expr, $result);
 			return $result;
 		} elseif ($expr instanceof Coalesce) {
+			$this->processExprNode($stmt, $expr->left, $scope, $storage, new NoopNodeCallback(), $context->enterDeep());
 			$nonNullabilityResult = $this->ensureNonNullability($scope, $expr->left);
 			$condScope = $this->lookForSetAllowedUndefinedExpressions($nonNullabilityResult->getScope(), $expr->left);
-			$condResult = $this->processExprNode($stmt, $expr->left, $condScope, $storage, $nodeCallback, $context->enterDeep());
+			$condResult = $this->processExprNode($stmt, $this->deepNodeCloner->cloneNode($expr->left), $condScope, $storage, $nodeCallback, $context->enterDeep());
 			$scope = $this->revertNonNullability($condResult->getScope(), $nonNullabilityResult->getSpecifiedExpressions());
 			$scope = $this->lookForUnsetAllowedUndefinedExpressions($scope, $expr->left);
 
