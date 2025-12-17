@@ -56,7 +56,6 @@ use PhpParser\Node\Stmt\Unset_;
 use PhpParser\Node\Stmt\While_;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\CloningVisitor;
 use PhpParser\NodeVisitorAbstract;
 use PHPStan\BetterReflection\Reflection\Adapter\ReflectionClass;
 use PHPStan\BetterReflection\Reflection\ReflectionEnum;
@@ -81,6 +80,7 @@ use PHPStan\Node\ClassPropertiesNode;
 use PHPStan\Node\ClassPropertyNode;
 use PHPStan\Node\ClassStatementsGatherer;
 use PHPStan\Node\ClosureReturnStatementsNode;
+use PHPStan\Node\DeepNodeCloner;
 use PHPStan\Node\DoWhileLoopConditionNode;
 use PHPStan\Node\ExecutionEndNode;
 use PHPStan\Node\Expr\AlwaysRememberedExpr;
@@ -270,6 +270,7 @@ class NodeScopeResolver
 		private readonly ParameterClosureThisExtensionProvider $parameterClosureThisExtensionProvider,
 		private readonly ParameterClosureTypeExtensionProvider $parameterClosureTypeExtensionProvider,
 		private readonly ScopeFactory $scopeFactory,
+		private readonly DeepNodeCloner $deepNodeCloner,
 		#[AutowiredParameter]
 		private readonly bool $polluteScopeWithLoopInitialAssignments,
 		#[AutowiredParameter]
@@ -2059,12 +2060,7 @@ class NodeScopeResolver
 				$throwPoints = array_merge($throwPoints, $exprResult->getThrowPoints());
 				$impurePoints = array_merge($impurePoints, $exprResult->getImpurePoints());
 				if ($var instanceof ArrayDimFetch && $var->dim !== null) {
-					$cloningTraverser = new NodeTraverser();
-					$cloningTraverser->addVisitor(new CloningVisitor());
-
-					/** @var Expr $clonedVar */
-					[$clonedVar] = $cloningTraverser->traverse([$var->var]);
-
+					$clonedVar = $this->deepNodeCloner->cloneNode($var->var);
 					$traverser = new NodeTraverser();
 					$traverser->addVisitor(new class () extends NodeVisitorAbstract {
 
