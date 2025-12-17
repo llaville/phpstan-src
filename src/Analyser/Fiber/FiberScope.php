@@ -11,6 +11,33 @@ use PHPStan\Type\Type;
 final class FiberScope extends MutatingScope
 {
 
+	public function toFiberScope(): self
+	{
+		return $this;
+	}
+
+	public function toMutatingScope(): MutatingScope
+	{
+		return $this->scopeFactory->toMutatingFactory()->create(
+			$this->context,
+			$this->isDeclareStrictTypes(),
+			$this->getFunction(),
+			$this->getNamespace(),
+			$this->expressionTypes,
+			$this->nativeExpressionTypes,
+			$this->conditionalExpressions,
+			$this->inClosureBindScopeClasses,
+			$this->getAnonymousFunctionReflection(),
+			$this->isInFirstLevelStatement(),
+			$this->currentlyAssignedExpressions,
+			$this->currentlyAllowedUndefinedExpressions,
+			$this->inFunctionCallsStack,
+			$this->afterExtractCall,
+			$this->getParentScope(),
+			$this->nativeTypesPromoted,
+		);
+	}
+
 	/** @api */
 	public function getType(Expr $node): Type
 	{

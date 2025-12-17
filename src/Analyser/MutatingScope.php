@@ -27,7 +27,6 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\NodeFinder;
-use PHPStan\Analyser\Fiber\FiberScope;
 use PHPStan\Node\ExecutionEndNode;
 use PHPStan\Node\Expr\AlwaysRememberedExpr;
 use PHPStan\Node\Expr\ExistingArrayDimFetch;
@@ -167,6 +166,7 @@ use function uksort;
 use function usort;
 use const PHP_INT_MAX;
 use const PHP_INT_MIN;
+use const PHP_VERSION_ID;
 
 class MutatingScope implements Scope, NodeCallbackInvoker
 {
@@ -205,7 +205,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 	 * @param list<array{MethodReflection|FunctionReflection|null, ParameterReflection|null}> $inFunctionCallsStack
 	 */
 	public function __construct(
-		private InternalScopeFactory $scopeFactory,
+		protected InternalScopeFactory $scopeFactory,
 		private ReflectionProvider $reflectionProvider,
 		private InitializerExprTypeResolver $initializerExprTypeResolver,
 		private DynamicReturnTypeExtensionRegistry $dynamicReturnTypeExtensionRegistry,
@@ -217,7 +217,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 		private NodeScopeResolver $nodeScopeResolver,
 		private RicherScopeGetTypeHelper $richerScopeGetTypeHelper,
 		private ConstantResolver $constantResolver,
-		private ScopeContext $context,
+		protected ScopeContext $context,
 		private PhpVersion $phpVersion,
 		private AttributeReflectionFactory $attributeReflectionFactory,
 		private int|array|null $configPhpVersion,
@@ -225,18 +225,18 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 		private bool $declareStrictTypes = false,
 		private PhpFunctionFromParserNodeReflection|null $function = null,
 		?string $namespace = null,
-		private array $expressionTypes = [],
-		private array $nativeExpressionTypes = [],
-		private array $conditionalExpressions = [],
-		private array $inClosureBindScopeClasses = [],
+		protected array $expressionTypes = [],
+		protected array $nativeExpressionTypes = [],
+		protected array $conditionalExpressions = [],
+		protected array $inClosureBindScopeClasses = [],
 		private ?ClosureType $anonymousFunctionReflection = null,
 		private bool $inFirstLevelStatement = true,
-		private array $currentlyAssignedExpressions = [],
-		private array $currentlyAllowedUndefinedExpressions = [],
-		private array $inFunctionCallsStack = [],
-		private bool $afterExtractCall = false,
+		protected array $currentlyAssignedExpressions = [],
+		protected array $currentlyAllowedUndefinedExpressions = [],
+		protected array $inFunctionCallsStack = [],
+		protected bool $afterExtractCall = false,
 		private ?Scope $parentScope = null,
-		private bool $nativeTypesPromoted = false,
+		protected bool $nativeTypesPromoted = false,
 	)
 	{
 		if ($namespace === '') {
@@ -248,8 +248,8 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 
 	public function toFiberScope(): self
 	{
-		if (static::class === FiberScope::class) {
-			return $this;
+		if (PHP_VERSION_ID < 80100) {
+			throw new ShouldNotHappenException('Cannot create FiberScope below PHP 8.1');
 		}
 
 		return $this->scopeFactory->toFiberFactory()->create(
@@ -274,28 +274,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 
 	public function toMutatingScope(): self
 	{
-		if (static::class === self::class) {
-			return $this;
-		}
-
-		return $this->scopeFactory->toMutatingFactory()->create(
-			$this->context,
-			$this->isDeclareStrictTypes(),
-			$this->getFunction(),
-			$this->getNamespace(),
-			$this->expressionTypes,
-			$this->nativeExpressionTypes,
-			$this->conditionalExpressions,
-			$this->inClosureBindScopeClasses,
-			$this->anonymousFunctionReflection,
-			$this->isInFirstLevelStatement(),
-			$this->currentlyAssignedExpressions,
-			$this->currentlyAllowedUndefinedExpressions,
-			$this->inFunctionCallsStack,
-			$this->afterExtractCall,
-			$this->parentScope,
-			$this->nativeTypesPromoted,
-		);
+		return $this;
 	}
 
 	/** @api */
