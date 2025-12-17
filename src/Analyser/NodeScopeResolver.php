@@ -1254,7 +1254,11 @@ class NodeScopeResolver
 			$hasYield = false;
 			$throwPoints = [];
 			$impurePoints = [];
-			$this->processTraitUse($stmt, $scope, $storage->duplicate(), $nodeCallback);
+
+			$traitStorage = $storage->duplicate();
+			$traitStorage->pendingFibers = [];
+			$this->processTraitUse($stmt, $scope, $traitStorage, $nodeCallback);
+			$this->processPendingFibers($traitStorage);
 		} elseif ($stmt instanceof Foreach_) {
 			$condResult = $this->processExprNode($stmt, $stmt->expr, $scope, $storage, $nodeCallback, ExpressionContext::createDeep());
 			$throwPoints = $overridingThrowPoints ?? $condResult->getThrowPoints();
