@@ -688,6 +688,9 @@ class NodeScopeResolver
 				array_merge($statementResult->getImpurePoints(), $functionImpurePoints),
 				$functionReflection,
 			), $functionScope, $storage);
+			if (!$scope->isInAnonymousFunction()) {
+				$this->processPendingFibers($storage);
+			}
 		} elseif ($stmt instanceof Node\Stmt\ClassMethod) {
 			$hasYield = false;
 			$throwPoints = [];
@@ -881,6 +884,9 @@ class NodeScopeResolver
 					}
 
 				}
+			}
+			if (!$scope->getClassReflection()->isAnonymous() && !$scope->isInAnonymousFunction()) {
+				$this->processPendingFibers($storage);
 			}
 		} elseif ($stmt instanceof Echo_) {
 			$hasYield = false;
