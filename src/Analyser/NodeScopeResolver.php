@@ -2557,6 +2557,14 @@ class NodeScopeResolver
 		ExpressionContext $context,
 	): ExpressionResult
 	{
+		$existingExprResult = $storage->findResult($expr);
+		if ($existingExprResult !== null) {
+			if ($nodeCallback instanceof ShallowNodeCallback) {
+				return $existingExprResult;
+			}
+			throw new ShouldNotHappenException(sprintf('Expr %s on line %d has already been analysed', get_class($expr), $expr->getStartLine()));
+		}
+
 		if ($expr instanceof Expr\CallLike && $expr->isFirstClassCallable()) {
 			if ($expr instanceof FuncCall) {
 				$newExpr = new FunctionCallableNode($expr->name, $expr);
@@ -2573,14 +2581,6 @@ class NodeScopeResolver
 			$newExprResult = $this->processExprNode($stmt, $newExpr, $scope, $storage, $nodeCallback, $context);
 			$this->storeResult($storage, $expr, $newExprResult);
 			return $newExprResult;
-		}
-
-		$existingExprResult = $storage->findResult($expr);
-		if ($existingExprResult !== null) {
-			if ($nodeCallback instanceof ShallowNodeCallback) {
-				return $existingExprResult;
-			}
-			throw new ShouldNotHappenException(sprintf('Expr %s on line %d has already been analysed', get_class($expr), $expr->getStartLine()));
 		}
 
 		$originalScope = $scope;
@@ -2658,7 +2658,6 @@ class NodeScopeResolver
 				true,
 			);
 			$scope = $result->getScope();
-			$this->storeResult($storage, $expr, $result);
 			$hasYield = $result->hasYield();
 			$throwPoints = $result->getThrowPoints();
 			$impurePoints = $result->getImpurePoints();
@@ -2671,6 +2670,17 @@ class NodeScopeResolver
 					$scope = $this->processStmtVarAnnotation($scope, $storage, $stmt, null, $nodeCallback);
 				}
 			}
+
+			return new ExpressionResult(
+				$scope,
+				$originalScope,
+				$hasYield,
+				$isAlwaysTerminating,
+				$throwPoints,
+				$impurePoints,
+				static fn (): MutatingScope => $scope->filterByTruthyValue($expr),
+				static fn (): MutatingScope => $scope->filterByFalseyValue($expr),
+			);
 		} elseif ($expr instanceof Expr\AssignOp) {
 			$result = $this->processAssignVar(
 				$scope,
@@ -2708,7 +2718,9 @@ class NodeScopeResolver
 				$expr instanceof Expr\AssignOp\Coalesce,
 			);
 			$scope = $result->getScope();
-			$this->storeResult($storage, $expr, $result);
+			if (!$expr instanceof Expr\AssignOp\Coalesce) {
+				$this->storeResult($storage, $expr, $result);
+			}
 			$hasYield = $result->hasYield();
 			$throwPoints = $result->getThrowPoints();
 			$impurePoints = $result->getImpurePoints();
@@ -2719,6 +2731,17 @@ class NodeScopeResolver
 			) {
 				$throwPoints[] = InternalThrowPoint::createExplicit($scope, new ObjectType(DivisionByZeroError::class), $expr, false);
 			}
+
+			return new ExpressionResult(
+				$scope,
+				$originalScope,
+				$hasYield,
+				$isAlwaysTerminating,
+				$throwPoints,
+				$impurePoints,
+				static fn (): MutatingScope => $scope->filterByTruthyValue($expr),
+				static fn (): MutatingScope => $scope->filterByFalseyValue($expr),
+			);
 		} elseif ($expr instanceof FuncCall) {
 			$parametersAcceptor = null;
 			$functionReflection = null;
