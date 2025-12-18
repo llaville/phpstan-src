@@ -1584,7 +1584,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 						continue;
 					}
 
-					$returnTypes[] = $returnScope->getType($returnNode->expr);
+					$returnTypes[] = $returnScope->toMutatingScope()->getType($returnNode->expr);
 				}
 
 				if (count($returnTypes) === 0) {
@@ -1611,21 +1611,21 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 							if ($yieldNode->key === null) {
 								$keyTypes[] = new IntegerType();
 							} else {
-								$keyTypes[] = $yieldScope->getType($yieldNode->key);
+								$keyTypes[] = $yieldScope->toMutatingScope()->getType($yieldNode->key);
 							}
 
 							if ($yieldNode->value === null) {
 								$valueTypes[] = new NullType();
 							} else {
-								$valueTypes[] = $yieldScope->getType($yieldNode->value);
+								$valueTypes[] = $yieldScope->toMutatingScope()->getType($yieldNode->value);
 							}
 
 							continue;
 						}
 
-						$yieldFromType = $yieldScope->getType($yieldNode->expr);
-						$keyTypes[] = $yieldScope->getIterableKeyType($yieldFromType);
-						$valueTypes[] = $yieldScope->getIterableValueType($yieldFromType);
+						$yieldFromType = $yieldScope->toMutatingScope()->getType($yieldNode->expr);
+						$keyTypes[] = $yieldScope->toMutatingScope()->getIterableKeyType($yieldFromType);
+						$valueTypes[] = $yieldScope->toMutatingScope()->getIterableValueType($yieldFromType);
 					}
 
 					$returnType = new GenericObjectType(Generator::class, [
