@@ -3,12 +3,9 @@
 namespace PHPStan\DependencyInjection;
 
 use Nette\DI\CompilerExtension;
-use Nette\DI\Definitions\ServiceDefinition;
 use Override;
-use PHPStan\Analyser\Analyser;
 use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
-use PHPStan\Analyser\FileAnalyser;
-use PHPStan\ShouldNotHappenException;
+use PHPStan\Analyser\NodeScopeResolver;
 use function getenv;
 
 final class FnsrExtension extends CompilerExtension
@@ -23,17 +20,11 @@ final class FnsrExtension extends CompilerExtension
 		}
 
 		$builder = $this->getContainerBuilder();
-		$analyserDef = $builder->getDefinitionByType(Analyser::class);
-		if (!$analyserDef instanceof ServiceDefinition) {
-			throw new ShouldNotHappenException();
-		}
-		$analyserDef->setArgument('nodeScopeResolver', '@' . FiberNodeScopeResolver::class);
+		$nodeScopeResolverDef = $builder->getDefinitionByType(NodeScopeResolver::class);
+		$nodeScopeResolverDef->setAutowired(false);
 
-		$fileAnalyserDef = $builder->getDefinitionByType(FileAnalyser::class);
-		if (!$fileAnalyserDef instanceof ServiceDefinition) {
-			throw new ShouldNotHappenException();
-		}
-		$fileAnalyserDef->setArgument('nodeScopeResolver', '@' . FiberNodeScopeResolver::class);
+		$fiberNodeScopeResolverDef = $builder->getDefinitionByType(FiberNodeScopeResolver::class);
+		$fiberNodeScopeResolverDef->setAutowired([NodeScopeResolver::class, FiberNodeScopeResolver::class]);
 	}
 
 }
