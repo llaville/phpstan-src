@@ -907,7 +907,7 @@ class NodeScopeResolver
 			return new InternalStatementResult($scope, $hasYield, $isAlwaysTerminating, [], $throwPoints, $impurePoints);
 		} elseif ($stmt instanceof Return_) {
 			if ($stmt->expr !== null) {
-				$result = $this->processExprNode($stmt, $stmt->expr, $scope, $storage, $nodeCallback, ExpressionContext::createDeep());
+				$result = $this->processExprNode($stmt, $stmt->expr, $stmtScope, $storage, $nodeCallback, ExpressionContext::createDeep());
 				$throwPoints = $result->getThrowPoints();
 				$impurePoints = $result->getImpurePoints();
 				$scope = $result->getScope();
