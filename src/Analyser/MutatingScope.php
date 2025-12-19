@@ -931,7 +931,12 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 			return new NonAcceptingNeverType();
 		}
 
-		if (!$node instanceof Variable && $this->hasExpressionType($node)->yes()) {
+		if (
+			!$node instanceof Variable
+			&& !$node instanceof Expr\Closure
+			&& !$node instanceof Expr\ArrowFunction
+			&& $this->hasExpressionType($node)->yes()
+		) {
 			return $this->expressionTypes[$exprString]->getType();
 		}
 
@@ -3575,7 +3580,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 		?array $callableParameters,
 	): self
 	{
-		$anonymousFunctionReflection = $this->getType($closure);
+		$anonymousFunctionReflection = $this->resolveType('__phpstanClosure', $closure);
 		if (!$anonymousFunctionReflection instanceof ClosureType) {
 			throw new ShouldNotHappenException();
 		}
@@ -3771,7 +3776,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 	 */
 	public function enterArrowFunction(Expr\ArrowFunction $arrowFunction, ?array $callableParameters): self
 	{
-		$anonymousFunctionReflection = $this->getType($arrowFunction);
+		$anonymousFunctionReflection = $this->resolveType('__phpStanArrowFn', $arrowFunction);
 		if (!$anonymousFunctionReflection instanceof ClosureType) {
 			throw new ShouldNotHappenException();
 		}
