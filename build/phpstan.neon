@@ -141,7 +141,6 @@ rules:
 	- PHPStan\Build\SkipTestsWithRequiresPhpAttributeRule
 	- PHPStan\Build\MemoizationPropertyRule
 	- PHPStan\Build\OrChainIdenticalComparisonToInArrayRule
-	- PHPStan\Build\ScopeGetTypeInGeneratorNamespaceRule
 
 services:
 	-
@@ -152,7 +151,3 @@ services:
 		class: PHPStan\Build\ContainerDynamicReturnTypeExtension
 		tags:
 			- phpstan.broker.dynamicMethodReturnTypeExtension
-	-
-		class: PHPStan\Build\GeneratorYieldSendTypeExtension
-		tags:
-			- phpstan.broker.expressionTypeResolverExtension

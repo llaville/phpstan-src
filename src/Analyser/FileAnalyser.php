@@ -4,8 +4,6 @@ namespace PHPStan\Analyser;
 
 use PhpParser\Node;
 use PHPStan\AnalysedCodeException;
-use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
-use PHPStan\Analyser\Generator\GeneratorScopeFactory;
 use PHPStan\BetterReflection\NodeCompiler\Exception\UnableToCompileNode;
 use PHPStan\BetterReflection\Reflection\Exception\CircularReference;
 use PHPStan\BetterReflection\Reflector\Exception\IdentifierNotFound;
@@ -61,9 +59,8 @@ final class FileAnalyser
 
 	public function __construct(
 		private ScopeFactory $scopeFactory,
-		private GeneratorScopeFactory $generatorScopeFactory,
 		#[AutowiredParameter(ref: '@' . NodeScopeResolver::class)]
-		private GeneratorNodeScopeResolver|NodeScopeResolver $nodeScopeResolver,
+		private NodeScopeResolver $nodeScopeResolver,
 		#[AutowiredParameter(ref: '@defaultAnalysisParser')]
 		private Parser $parser,
 		private DependencyResolver $dependencyResolver,
@@ -257,11 +254,7 @@ final class FileAnalyser
 					$nodeCallback($node, $scope, $callbackInvocationNumber);
 				};
 
-				if ($this->nodeScopeResolver instanceof NodeScopeResolver) {
-					$scope = $this->scopeFactory->create(ScopeContext::create($file), $realNodeCallback);
-				} else {
-					$scope = $this->generatorScopeFactory->create(ScopeContext::create($file));
-				}
+				$scope = $this->scopeFactory->create(ScopeContext::create($file), $realNodeCallback);
 				$realNodeCallback(new FileNode($parserNodes), $scope);
 				$this->nodeScopeResolver->processNodes(
 					$parserNodes,

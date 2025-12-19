@@ -2,8 +2,6 @@
 
 namespace PHPStan\Analyser;
 
-use PHPStan\Analyser\Generator\GeneratorTypeSpecifier;
-use PHPStan\Analyser\Generator\SpecifiedTypesHelper;
 use PHPStan\Broker\BrokerFactory;
 use PHPStan\DependencyInjection\AutowiredService;
 use PHPStan\DependencyInjection\Container;
@@ -20,7 +18,7 @@ final class TypeSpecifierFactory
 	public const METHOD_TYPE_SPECIFYING_EXTENSION_TAG = 'phpstan.typeSpecifier.methodTypeSpecifyingExtension';
 	public const STATIC_METHOD_TYPE_SPECIFYING_EXTENSION_TAG = 'phpstan.typeSpecifier.staticMethodTypeSpecifyingExtension';
 
-	public function __construct(private Container $container, private bool $gnsr = false)
+	public function __construct(private Container $container)
 	{
 	}
 
@@ -30,21 +28,15 @@ final class TypeSpecifierFactory
 		$methodTypeSpecifying = $this->container->getServicesByTag(self::METHOD_TYPE_SPECIFYING_EXTENSION_TAG);
 		$staticMethodTypeSpecifying = $this->container->getServicesByTag(self::STATIC_METHOD_TYPE_SPECIFYING_EXTENSION_TAG);
 
-		if ($this->gnsr) {
-			$typeSpecifier = new GeneratorTypeSpecifier(
-				$this->container->getByType(SpecifiedTypesHelper::class),
-			);
-		} else {
-			$typeSpecifier = new LegacyTypeSpecifier(
-				$this->container->getByType(ExprPrinter::class),
-				$this->container->getByType(ReflectionProvider::class),
-				$this->container->getByType(PhpVersion::class),
-				$functionTypeSpecifying,
-				$methodTypeSpecifying,
-				$staticMethodTypeSpecifying,
-				$this->container->getParameter('rememberPossiblyImpureFunctionValues'),
-			);
-		}
+		$typeSpecifier = new LegacyTypeSpecifier(
+			$this->container->getByType(ExprPrinter::class),
+			$this->container->getByType(ReflectionProvider::class),
+			$this->container->getByType(PhpVersion::class),
+			$functionTypeSpecifying,
+			$methodTypeSpecifying,
+			$staticMethodTypeSpecifying,
+			$this->container->getParameter('rememberPossiblyImpureFunctionValues'),
+		);
 
 		foreach (array_merge(
 			$this->container->getServicesByTag(BrokerFactory::PROPERTIES_CLASS_REFLECTION_EXTENSION_TAG),

@@ -3,7 +3,6 @@
 namespace PHPStan\Analyser;
 
 use Closure;
-use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Collectors\CollectedData;
 use PHPStan\Collectors\Registry as CollectorRegistry;
 use PHPStan\DependencyInjection\AutowiredParameter;
@@ -27,7 +26,7 @@ final class Analyser
 		private RuleRegistry $ruleRegistry,
 		private CollectorRegistry $collectorRegistry,
 		#[AutowiredParameter(ref: '@' . NodeScopeResolver::class)]
-		private GeneratorNodeScopeResolver|NodeScopeResolver $nodeScopeResolver,
+		private NodeScopeResolver $nodeScopeResolver,
 		#[AutowiredParameter]
 		private int $internalErrorsCountLimit,
 	)

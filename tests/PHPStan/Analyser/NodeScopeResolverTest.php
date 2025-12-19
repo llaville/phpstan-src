@@ -305,7 +305,6 @@ class NodeScopeResolverTest extends TypeInferenceTestCase
 			[
 				__DIR__ . '/../../../conf/bleedingEdge.neon',
 				__DIR__ . '/typeAliases.neon',
-				__DIR__ . '/gnsr-extensions.neon',
 			],
 		);
 	}
