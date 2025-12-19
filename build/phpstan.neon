@@ -118,9 +118,6 @@ parameters:
 			count: 1
 			path: ../src/Diagnose/PHPStanDiagnoseExtension.php
 		- '#^Short ternary operator is not allowed#'
-		-
-			identifier: shipmonk.deadMethod
-			path: ../src/Analyser/Generator
 	reportStaticMethodSignatures: true
 	tmpDir: %rootDir%/tmp
 	stubFiles:
