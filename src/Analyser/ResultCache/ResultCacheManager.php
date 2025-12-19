@@ -1025,9 +1025,12 @@ return [
 			ksort($projectConfigArray);
 		}
 
+		$fnsr = getenv('PHPSTAN_FNSR', true);
+
 		return [
 			'cacheVersion' => self::CACHE_VERSION,
 			'phpstanVersion' => ComposerHelper::getPhpStanVersion(),
+			'fnsr' => $fnsr,
 			'metaExtensions' => $this->getMetaFromPhpStanExtensions(),
 			'phpVersion' => PHP_VERSION_ID,
 			'projectConfig' => $projectConfigArray,
