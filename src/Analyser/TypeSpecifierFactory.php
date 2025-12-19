@@ -28,7 +28,7 @@ final class TypeSpecifierFactory
 		$methodTypeSpecifying = $this->container->getServicesByTag(self::METHOD_TYPE_SPECIFYING_EXTENSION_TAG);
 		$staticMethodTypeSpecifying = $this->container->getServicesByTag(self::STATIC_METHOD_TYPE_SPECIFYING_EXTENSION_TAG);
 
-		$typeSpecifier = new LegacyTypeSpecifier(
+		$typeSpecifier = new TypeSpecifier(
 			$this->container->getByType(ExprPrinter::class),
 			$this->container->getByType(ReflectionProvider::class),
 			$this->container->getByType(PhpVersion::class),
