@@ -23,6 +23,7 @@ final class ExpressionResult
 	 */
 	public function __construct(
 		private MutatingScope $scope,
+		private MutatingScope $beforeScope,
 		private bool $hasYield,
 		private bool $isAlwaysTerminating,
 		private array $throwPoints,
@@ -38,6 +39,11 @@ final class ExpressionResult
 	public function getScope(): MutatingScope
 	{
 		return $this->scope;
+	}
+
+	public function getBeforeScope(): MutatingScope
+	{
+		return $this->beforeScope;
 	}
 
 	public function hasYield(): bool

@@ -166,8 +166,9 @@ use function uksort;
 use function usort;
 use const PHP_INT_MAX;
 use const PHP_INT_MIN;
+use const PHP_VERSION_ID;
 
-final class MutatingScope implements Scope, NodeCallbackInvoker
+class MutatingScope implements Scope, NodeCallbackInvoker
 {
 
 	private const BOOLEAN_EXPRESSION_MAX_PROCESS_DEPTH = 4;
@@ -204,7 +205,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 	 * @param list<array{MethodReflection|FunctionReflection|null, ParameterReflection|null}> $inFunctionCallsStack
 	 */
 	public function __construct(
-		private InternalScopeFactory $scopeFactory,
+		protected InternalScopeFactory $scopeFactory,
 		private ReflectionProvider $reflectionProvider,
 		private InitializerExprTypeResolver $initializerExprTypeResolver,
 		private DynamicReturnTypeExtensionRegistry $dynamicReturnTypeExtensionRegistry,
@@ -216,7 +217,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		private NodeScopeResolver $nodeScopeResolver,
 		private RicherScopeGetTypeHelper $richerScopeGetTypeHelper,
 		private ConstantResolver $constantResolver,
-		private ScopeContext $context,
+		protected ScopeContext $context,
 		private PhpVersion $phpVersion,
 		private AttributeReflectionFactory $attributeReflectionFactory,
 		private int|array|null $configPhpVersion,
@@ -224,18 +225,18 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		private bool $declareStrictTypes = false,
 		private PhpFunctionFromParserNodeReflection|null $function = null,
 		?string $namespace = null,
-		private array $expressionTypes = [],
-		private array $nativeExpressionTypes = [],
-		private array $conditionalExpressions = [],
-		private array $inClosureBindScopeClasses = [],
+		protected array $expressionTypes = [],
+		protected array $nativeExpressionTypes = [],
+		protected array $conditionalExpressions = [],
+		protected array $inClosureBindScopeClasses = [],
 		private ?ClosureType $anonymousFunctionReflection = null,
 		private bool $inFirstLevelStatement = true,
-		private array $currentlyAssignedExpressions = [],
-		private array $currentlyAllowedUndefinedExpressions = [],
-		private array $inFunctionCallsStack = [],
-		private bool $afterExtractCall = false,
+		protected array $currentlyAssignedExpressions = [],
+		protected array $currentlyAllowedUndefinedExpressions = [],
+		protected array $inFunctionCallsStack = [],
+		protected bool $afterExtractCall = false,
 		private ?Scope $parentScope = null,
-		private bool $nativeTypesPromoted = false,
+		protected bool $nativeTypesPromoted = false,
 	)
 	{
 		if ($namespace === '') {
@@ -243,6 +244,37 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		}
 
 		$this->namespace = $namespace;
+	}
+
+	public function toFiberScope(): self
+	{
+		if (PHP_VERSION_ID < 80100) {
+			throw new ShouldNotHappenException('Cannot create FiberScope below PHP 8.1');
+		}
+
+		return $this->scopeFactory->toFiberFactory()->create(
+			$this->context,
+			$this->isDeclareStrictTypes(),
+			$this->getFunction(),
+			$this->getNamespace(),
+			$this->expressionTypes,
+			$this->nativeExpressionTypes,
+			$this->conditionalExpressions,
+			$this->inClosureBindScopeClasses,
+			$this->anonymousFunctionReflection,
+			$this->isInFirstLevelStatement(),
+			$this->currentlyAssignedExpressions,
+			$this->currentlyAllowedUndefinedExpressions,
+			$this->inFunctionCallsStack,
+			$this->afterExtractCall,
+			$this->parentScope,
+			$this->nativeTypesPromoted,
+		);
+	}
+
+	public function toMutatingScope(): self
+	{
+		return $this;
 	}
 
 	/** @api */
@@ -982,9 +1014,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			}
 
 			if ($this->getBooleanExpressionDepth($node->left) <= self::BOOLEAN_EXPRESSION_MAX_PROCESS_DEPTH) {
-				$noopCallback = static function (): void {
-				};
-				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, $noopCallback, ExpressionContext::createDeep());
+				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, new ExpressionResultStorage(), new NoopNodeCallback(), ExpressionContext::createDeep());
 				$rightBooleanType = $leftResult->getTruthyScope()->getType($node->right)->toBoolean();
 			} else {
 				$rightBooleanType = $this->filterByTruthyValue($node->left)->getType($node->right)->toBoolean();
@@ -1014,9 +1044,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 			}
 
 			if ($this->getBooleanExpressionDepth($node->left) <= self::BOOLEAN_EXPRESSION_MAX_PROCESS_DEPTH) {
-				$noopCallback = static function (): void {
-				};
-				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, $noopCallback, ExpressionContext::createDeep());
+				$leftResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->left), $node->left, $this, new ExpressionResultStorage(), new NoopNodeCallback(), ExpressionContext::createDeep());
 				$rightBooleanType = $leftResult->getFalseyScope()->getType($node->right)->toBoolean();
 			} else {
 				$rightBooleanType = $this->filterByFalseyValue($node->left)->getType($node->right)->toBoolean();
@@ -1406,6 +1434,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 					new Node\Stmt\Expression($node->expr),
 					$node->expr,
 					$arrowScope,
+					new ExpressionResultStorage(),
 					static function (Node $node, Scope $scope) use ($arrowScope, &$arrowFunctionImpurePoints, &$invalidateExpressions): void {
 						if ($scope->getAnonymousFunctionReflection() !== $arrowScope->getAnonymousFunctionReflection()) {
 							return;
@@ -1555,7 +1584,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 						continue;
 					}
 
-					$returnTypes[] = $returnScope->getType($returnNode->expr);
+					$returnTypes[] = $returnScope->toMutatingScope()->getType($returnNode->expr);
 				}
 
 				if (count($returnTypes) === 0) {
@@ -1582,21 +1611,21 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 							if ($yieldNode->key === null) {
 								$keyTypes[] = new IntegerType();
 							} else {
-								$keyTypes[] = $yieldScope->getType($yieldNode->key);
+								$keyTypes[] = $yieldScope->toMutatingScope()->getType($yieldNode->key);
 							}
 
 							if ($yieldNode->value === null) {
 								$valueTypes[] = new NullType();
 							} else {
-								$valueTypes[] = $yieldScope->getType($yieldNode->value);
+								$valueTypes[] = $yieldScope->toMutatingScope()->getType($yieldNode->value);
 							}
 
 							continue;
 						}
 
-						$yieldFromType = $yieldScope->getType($yieldNode->expr);
-						$keyTypes[] = $yieldScope->getIterableKeyType($yieldFromType);
-						$valueTypes[] = $yieldScope->getIterableValueType($yieldFromType);
+						$yieldFromType = $yieldScope->toMutatingScope()->getType($yieldNode->expr);
+						$keyTypes[] = $yieldScope->toMutatingScope()->getIterableKeyType($yieldFromType);
+						$valueTypes[] = $yieldScope->toMutatingScope()->getIterableValueType($yieldFromType);
 					}
 
 					$returnType = new GenericObjectType(Generator::class, [
@@ -2042,9 +2071,7 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		}
 
 		if ($node instanceof Expr\Ternary) {
-			$noopCallback = static function (): void {
-			};
-			$condResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->cond), $node->cond, $this, $noopCallback, ExpressionContext::createDeep());
+			$condResult = $this->nodeScopeResolver->processExprNode(new Node\Stmt\Expression($node->cond), $node->cond, $this, new ExpressionResultStorage(), new NoopNodeCallback(), ExpressionContext::createDeep());
 			if ($node->if === null) {
 				$conditionType = $this->getType($node->cond);
 				$booleanConditionType = $conditionType->toBoolean();
@@ -5750,6 +5777,14 @@ final class MutatingScope implements Scope, NodeCallbackInvoker
 		foreach ($this->nativeExpressionTypes as $exprString => $nativeTypeHolder) {
 			$key = sprintf('native %s (%s)', $exprString, $nativeTypeHolder->getCertainty()->describe());
 			$descriptions[$key] = $nativeTypeHolder->getType()->describe(VerbosityLevel::precise());
+		}
+
+		foreach (array_keys($this->currentlyAssignedExpressions) as $exprString) {
+			$descriptions[sprintf('currently assigned %s', $exprString)] = 'true';
+		}
+
+		foreach (array_keys($this->currentlyAllowedUndefinedExpressions) as $exprString) {
+			$descriptions[sprintf('currently allowed undefined %s', $exprString)] = 'true';
 		}
 
 		foreach ($this->conditionalExpressions as $exprString => $holders) {

@@ -9211,7 +9211,7 @@ class LegacyNodeScopeResolverTest extends TypeInferenceTestCase
 					return;
 				}
 
-				self::$assertTypesCache[$file][$evaluatedPointExpression] = $scope;
+				self::$assertTypesCache[$file][$evaluatedPointExpression] = $scope->toMutatingScope();
 
 				$assertType($scope);
 			},

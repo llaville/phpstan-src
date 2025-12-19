@@ -6,6 +6,7 @@ use PhpParser\Node;
 use PHPStan\Analyser\Analyser;
 use PHPStan\Analyser\AnalyserResultFinalizer;
 use PHPStan\Analyser\Error;
+use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
 use PHPStan\Analyser\FileAnalyser;
 use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScopeFactory;
@@ -26,6 +27,7 @@ use PHPStan\DependencyInjection\Type\ParameterOutTypeExtensionProvider;
 use PHPStan\File\FileHelper;
 use PHPStan\File\FileReader;
 use PHPStan\Fixable\Patcher;
+use PHPStan\Node\DeepNodeCloner;
 use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Php\PhpVersion;
 use PHPStan\PhpDoc\PhpDocInheritanceResolver;
@@ -97,7 +99,13 @@ abstract class RuleTestCase extends PHPStanTestCase
 		$reflectionProvider = $this->createReflectionProvider();
 		$typeSpecifier = $this->getTypeSpecifier();
 
-		return new NodeScopeResolver(
+		$enableFnsr = getenv('PHPSTAN_FNSR');
+		$className = NodeScopeResolver::class;
+		if ($enableFnsr === '1') {
+			$className = FiberNodeScopeResolver::class;
+		}
+
+		return new $className(
 			$reflectionProvider,
 			self::getContainer()->getByType(InitializerExprTypeResolver::class),
 			self::getReflector(),
@@ -114,6 +122,7 @@ abstract class RuleTestCase extends PHPStanTestCase
 			self::getContainer()->getByType(ParameterClosureThisExtensionProvider::class),
 			self::getContainer()->getByType(ParameterClosureTypeExtensionProvider::class),
 			self::createScopeFactory($reflectionProvider, $typeSpecifier),
+			self::getContainer()->getByType(DeepNodeCloner::class),
 			$this->shouldPolluteScopeWithLoopInitialAssignments(),
 			$this->shouldPolluteScopeWithAlwaysIterableForeach(),
 			self::getContainer()->getParameter('polluteScopeWithBlock'),

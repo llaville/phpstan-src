@@ -4,6 +4,8 @@ namespace PHPStan\Node\Printer;
 
 use PhpParser\PrettyPrinter\Standard;
 use PHPStan\DependencyInjection\AutowiredService;
+use PHPStan\Node\BooleanAndNode;
+use PHPStan\Node\BooleanOrNode;
 use PHPStan\Node\Expr\AlwaysRememberedExpr;
 use PHPStan\Node\Expr\ExistingArrayDimFetch;
 use PHPStan\Node\Expr\ForeachValueByRefExpr;
@@ -114,6 +116,16 @@ final class Printer extends Standard
 	protected function pPHPStan_Node_IssetExpr(IssetExpr $expr): string // phpcs:ignore
 	{
 		return sprintf('__phpstanIssetExpr(%s)', $this->p($expr->getExpr()));
+	}
+
+	protected function pPHPStan_Node_BooleanOrNode(BooleanOrNode $expr): string // phpcs:ignore
+	{
+		return sprintf('__phpstanBooleanOr(%s, %s)', $this->p($expr->getOriginalNode()->left), $this->p($expr->getOriginalNode()->right));
+	}
+
+	protected function pPHPStan_Node_BooleanAndNode(BooleanAndNode $expr): string // phpcs:ignore
+	{
+		return sprintf('__phpstanBooleanAnd(%s, %s)', $this->p($expr->getOriginalNode()->left), $this->p($expr->getOriginalNode()->right));
 	}
 
 }

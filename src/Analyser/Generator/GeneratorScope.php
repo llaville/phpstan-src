@@ -4251,4 +4251,9 @@ final class GeneratorScope implements Scope, NodeCallbackInvoker
 		Fiber::suspend(new NodeCallbackRequest($node, $this, null));
 	}
 
+	public function toMutatingScope(): self
+	{
+		return $this;
+	}
+
 }

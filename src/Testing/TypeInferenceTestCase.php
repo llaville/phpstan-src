@@ -5,6 +5,7 @@ namespace PHPStan\Testing;
 use PhpParser\Node;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Name;
+use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
 use PHPStan\Analyser\Generator\GeneratorScopeFactory;
 use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
@@ -18,6 +19,7 @@ use PHPStan\DependencyInjection\Type\ParameterClosureTypeExtensionProvider;
 use PHPStan\DependencyInjection\Type\ParameterOutTypeExtensionProvider;
 use PHPStan\File\FileHelper;
 use PHPStan\File\SystemAgnosticSimpleRelativePathHelper;
+use PHPStan\Node\DeepNodeCloner;
 use PHPStan\Node\InClassNode;
 use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Php\PhpVersion;
@@ -71,7 +73,13 @@ abstract class TypeInferenceTestCase extends PHPStanTestCase
 		$reflectionProvider = self::createReflectionProvider();
 		$typeSpecifier = $container->getService('typeSpecifier');
 
-		return new NodeScopeResolver(
+		$enableFnsr = getenv('PHPSTAN_FNSR');
+		$className = NodeScopeResolver::class;
+		if ($enableFnsr === '1') {
+			$className = FiberNodeScopeResolver::class;
+		}
+
+		return new $className(
 			$reflectionProvider,
 			$container->getByType(InitializerExprTypeResolver::class),
 			self::getReflector(),
@@ -88,6 +96,7 @@ abstract class TypeInferenceTestCase extends PHPStanTestCase
 			$container->getByType(ParameterClosureThisExtensionProvider::class),
 			$container->getByType(ParameterClosureTypeExtensionProvider::class),
 			self::createScopeFactory($reflectionProvider, $typeSpecifier),
+			self::getContainer()->getByType(DeepNodeCloner::class),
 			$container->getParameter('polluteScopeWithLoopInitialAssignments'),
 			$container->getParameter('polluteScopeWithAlwaysIterableForeach'),
 			$container->getParameter('polluteScopeWithBlock'),

@@ -149,10 +149,6 @@ class MatchExpressionRuleTest extends RuleTestCase
 				104,
 			],
 			[
-				'Match arm comparison between *NEVER* and MatchEnums\Foo::ONE is always false.',
-				113,
-			],
-			[
 				'Match arm comparison between *NEVER* and MatchEnums\DifferentEnum::ONE is always false.',
 				113,
 			],
