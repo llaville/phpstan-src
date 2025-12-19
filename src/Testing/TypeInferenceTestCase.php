@@ -6,9 +6,6 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Name;
 use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
-use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
-use PHPStan\Analyser\Generator\GeneratorScopeFactory;
-use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\MutatingScope;
 use PHPStan\Analyser\NodeScopeResolver;
 use PHPStan\Analyser\Scope;
@@ -21,7 +18,6 @@ use PHPStan\File\FileHelper;
 use PHPStan\File\SystemAgnosticSimpleRelativePathHelper;
 use PHPStan\Node\DeepNodeCloner;
 use PHPStan\Node\InClassNode;
-use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Php\PhpVersion;
 use PHPStan\PhpDoc\PhpDocInheritanceResolver;
 use PHPStan\PhpDoc\TypeStringResolver;
@@ -58,18 +54,9 @@ use const PHP_VERSION;
 abstract class TypeInferenceTestCase extends PHPStanTestCase
 {
 
-	protected static function createNodeScopeResolver(): NodeScopeResolver|GeneratorNodeScopeResolver
+	protected static function createNodeScopeResolver(): NodeScopeResolver
 	{
 		$container = self::getContainer();
-		$enableGnsr = getenv('PHPSTAN_GNSR');
-		if ($enableGnsr === '1') {
-			return new GeneratorNodeScopeResolver(
-				$container->getByType(ExprPrinter::class),
-				$container->getByType(VarAnnotationHelper::class),
-				$container,
-			);
-		}
-
 		$reflectionProvider = self::createReflectionProvider();
 		$typeSpecifier = $container->getService('typeSpecifier');
 
@@ -136,7 +123,7 @@ abstract class TypeInferenceTestCase extends PHPStanTestCase
 
 		$resolver->processNodes(
 			self::getParser()->parseFile($file),
-			$resolver instanceof NodeScopeResolver ? self::createScope($file, $dynamicConstantNames) : self::getContainer()->getByType(GeneratorScopeFactory::class)->create(ScopeContext::create($file)),
+			self::createScope($file, $dynamicConstantNames),
 			$callback,
 		);
 	}

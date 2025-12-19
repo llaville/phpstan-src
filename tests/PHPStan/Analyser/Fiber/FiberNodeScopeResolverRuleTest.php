@@ -76,9 +76,9 @@ class FiberNodeScopeResolverRuleTest extends RuleTestCase
 				$arg0 = $scope->getType($node->getArgs()[0]->value); // on purpose to hit the cache
 
 				return [
-					RuleErrorBuilder::message($arg0->describe(VerbosityLevel::precise()))->identifier('gnsr.rule')->build(),
-					RuleErrorBuilder::message($scope->getType($node->getArgs()[1]->value)->describe(VerbosityLevel::precise()))->identifier('gnsr.rule')->build(),
-					RuleErrorBuilder::message($scope->getType($node->getArgs()[2]->value)->describe(VerbosityLevel::precise()))->identifier('gnsr.rule')->build(),
+					RuleErrorBuilder::message($arg0->describe(VerbosityLevel::precise()))->identifier('fnsr.rule')->build(),
+					RuleErrorBuilder::message($scope->getType($node->getArgs()[1]->value)->describe(VerbosityLevel::precise()))->identifier('fnsr.rule')->build(),
+					RuleErrorBuilder::message($scope->getType($node->getArgs()[2]->value)->describe(VerbosityLevel::precise()))->identifier('fnsr.rule')->build(),
 				];
 			},
 			[
@@ -97,8 +97,8 @@ class FiberNodeScopeResolverRuleTest extends RuleTestCase
 				$synthetic2 = $scope->getType(new Node\Scalar\String_('bar'));
 
 				return [
-					RuleErrorBuilder::message($synthetic->describe(VerbosityLevel::precise()))->identifier('gnsr.rule')->build(),
-					RuleErrorBuilder::message($synthetic2->describe(VerbosityLevel::precise()))->identifier('gnsr.rule')->build(),
+					RuleErrorBuilder::message($synthetic->describe(VerbosityLevel::precise()))->identifier('fnsr.rule')->build(),
+					RuleErrorBuilder::message($synthetic2->describe(VerbosityLevel::precise()))->identifier('fnsr.rule')->build(),
 				];
 			},
 			[

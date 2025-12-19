@@ -6,7 +6,6 @@ use Nette\DI\Container;
 use PhpParser\Lexer;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser\Php7;
-use PHPStan\Analyser\Generator\GeneratorScopeFactory;
 use PHPStan\Analyser\Ignore\IgnoredErrorHelper;
 use PHPStan\Analyser\Ignore\IgnoreLexer;
 use PHPStan\Collectors\Registry as CollectorRegistry;
@@ -836,7 +835,6 @@ class AnalyserTest extends PHPStanTestCase
 		$lexer = new Lexer();
 		$fileAnalyser = new FileAnalyser(
 			self::createScopeFactory($reflectionProvider, $typeSpecifier),
-			$container->getByType(GeneratorScopeFactory::class),
 			$nodeScopeResolver,
 			new RichParser(
 				new Php7($lexer),

@@ -1,5 +1,0 @@
-services:
-	-
-		class: PHPStan\Build\GeneratorYieldSendTypeExtension
-		tags:
-			- phpstan.broker.expressionTypeResolverExtension

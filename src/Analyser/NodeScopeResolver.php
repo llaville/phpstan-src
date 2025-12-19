@@ -1023,26 +1023,8 @@ class NodeScopeResolver
 				throw new ShouldNotHappenException();
 			}
 
-			$classStatementsGatherer = new ClassStatementsGatherer($classReflection);
-			$classStatementsGathererCallback = new class ($classStatementsGatherer, $nodeCallback) {
-
-				/**
-				 * @param callable(Node $node, Scope $scope): void $nodeCallback
-				 */
-				public function __construct(
-					private ClassStatementsGatherer $classStatementsGatherer,
-					private $nodeCallback,
-				)
-				{
-				}
-
-				public function __invoke(Node $node, Scope $scope): void
-				{
-					($this->classStatementsGatherer)($node, $scope, $this->nodeCallback);
-				}
-
-			};
-			$this->processAttributeGroups($stmt, $stmt->attrGroups, $classScope, $storage, $classStatementsGathererCallback);
+			$classStatementsGatherer = new ClassStatementsGatherer($classReflection, $nodeCallback);
+			$this->processAttributeGroups($stmt, $stmt->attrGroups, $classScope, $storage, $classStatementsGatherer);
 
 			$classLikeStatements = $stmt->stmts;
 			if ($this->narrowMethodScopeFromConstructor) {
@@ -1063,7 +1045,7 @@ class NodeScopeResolver
 				});
 			}
 
-			$this->processStmtNodesInternal($stmt, $classLikeStatements, $classScope, $storage, $classStatementsGathererCallback, $context);
+			$this->processStmtNodesInternal($stmt, $classLikeStatements, $classScope, $storage, $classStatementsGatherer, $context);
 			$this->callNodeCallback($nodeCallback, new ClassPropertiesNode($stmt, $this->readWritePropertiesExtensionProvider, $classStatementsGatherer->getProperties(), $classStatementsGatherer->getPropertyUsages(), $classStatementsGatherer->getMethodCalls(), $classStatementsGatherer->getReturnStatementsNodes(), $classStatementsGatherer->getPropertyAssigns(), $classReflection), $classScope, $storage);
 			$this->callNodeCallback($nodeCallback, new ClassMethodsNode($stmt, $classStatementsGatherer->getMethods(), $classStatementsGatherer->getMethodCalls(), $classReflection), $classScope, $storage);
 			$this->callNodeCallback($nodeCallback, new ClassConstantsNode($stmt, $classStatementsGatherer->getConstants(), $classStatementsGatherer->getConstantFetches(), $classReflection), $classScope, $storage);

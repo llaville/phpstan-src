@@ -8,9 +8,6 @@ use PHPStan\Analyser\AnalyserResultFinalizer;
 use PHPStan\Analyser\Error;
 use PHPStan\Analyser\Fiber\FiberNodeScopeResolver;
 use PHPStan\Analyser\FileAnalyser;
-use PHPStan\Analyser\Generator\GeneratorNodeScopeResolver;
-use PHPStan\Analyser\Generator\GeneratorScopeFactory;
-use PHPStan\Analyser\Generator\NodeHandler\VarAnnotationHelper;
 use PHPStan\Analyser\IgnoreErrorExtensionProvider;
 use PHPStan\Analyser\InternalError;
 use PHPStan\Analyser\LocalIgnoresProcessor;
@@ -28,7 +25,6 @@ use PHPStan\File\FileHelper;
 use PHPStan\File\FileReader;
 use PHPStan\Fixable\Patcher;
 use PHPStan\Node\DeepNodeCloner;
-use PHPStan\Node\Printer\ExprPrinter;
 use PHPStan\Php\PhpVersion;
 use PHPStan\PhpDoc\PhpDocInheritanceResolver;
 use PHPStan\Reflection\ClassReflectionFactory;
@@ -83,18 +79,8 @@ abstract class RuleTestCase extends PHPStanTestCase
 		return self::getContainer()->getService('typeSpecifier');
 	}
 
-	protected function createNodeScopeResolver(): NodeScopeResolver|GeneratorNodeScopeResolver
+	protected function createNodeScopeResolver(): NodeScopeResolver
 	{
-		$enableGnsr = getenv('PHPSTAN_GNSR');
-		if ($enableGnsr === '1') {
-			$container = self::getContainer();
-
-			return new GeneratorNodeScopeResolver(
-				$container->getByType(ExprPrinter::class),
-				$container->getByType(VarAnnotationHelper::class),
-				$container,
-			);
-		}
 		$readWritePropertiesExtensions = $this->getReadWritePropertiesExtensions();
 		$reflectionProvider = $this->createReflectionProvider();
 		$typeSpecifier = $this->getTypeSpecifier();
@@ -146,7 +132,6 @@ abstract class RuleTestCase extends PHPStanTestCase
 					$this->createReflectionProvider(),
 					$this->getTypeSpecifier(),
 				),
-				self::getContainer()->getByType(GeneratorScopeFactory::class),
 				$nodeScopeResolver,
 				$this->getParser(),
 				self::getContainer()->getByType(DependencyResolver::class),
