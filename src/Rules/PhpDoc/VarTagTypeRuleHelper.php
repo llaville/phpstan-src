@@ -90,7 +90,7 @@ final class VarTagTypeRuleHelper
 	public function checkExprType(Scope $scope, Node\Expr $expr, Type $varTagType): array
 	{
 		$errors = [];
-		$exprNativeType = $scope->getNativeType($expr);
+		$exprNativeType = $scope->getScopeNativeType($expr);
 		$containsPhpStanType = $this->containsPhpStanType($varTagType);
 		if ($this->shouldVarTagTypeBeReported($scope, $expr, $exprNativeType, $varTagType)) {
 			$verbosity = VerbosityLevel::getRecommendedLevelByType($exprNativeType, $varTagType);
@@ -100,7 +100,7 @@ final class VarTagTypeRuleHelper
 				$exprNativeType->describe($verbosity),
 			))->identifier('varTag.nativeType')->build();
 		} else {
-			$exprType = $scope->getType($expr);
+			$exprType = $scope->getScopeType($expr);
 			if (
 				$this->shouldVarTagTypeBeReported($scope, $expr, $exprType, $varTagType)
 				&& ($this->checkTypeAgainstPhpDocType || $containsPhpStanType)
@@ -115,7 +115,7 @@ final class VarTagTypeRuleHelper
 		}
 
 		if (count($errors) === 0 && $containsPhpStanType) {
-			$exprType = $scope->getType($expr);
+			$exprType = $scope->getScopeType($expr);
 			if (!$exprType->equals($varTagType)) {
 				$verbosity = VerbosityLevel::getRecommendedLevelByType($exprType, $varTagType);
 				$errors[] = RuleErrorBuilder::message(sprintf(
