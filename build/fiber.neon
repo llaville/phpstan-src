@@ -3,4 +3,4 @@ parameters:
 		-
 			message: '#Fiber#'
 			identifier: class.notFound
-			path: ../src/Analyser/Generator/*
+			path: ../src/Analyser/*
