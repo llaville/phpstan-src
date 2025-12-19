@@ -4,6 +4,8 @@ namespace PHPStan\Build;
 
 use PhpParser\Modifiers;
 use PhpParser\Node;
+use PHPStan\Analyser\MutatingScope;
+use PHPStan\Analyser\NodeScopeResolver;
 use PHPStan\Analyser\Scope;
 use PHPStan\File\FileHelper;
 use PHPStan\Node\InClassNode;
@@ -55,6 +57,8 @@ final class FinalClassRule implements Rule
 			ExtendedFunctionVariant::class,
 			DummyParameter::class,
 			PhpFunctionFromParserNodeReflection::class,
+			NodeScopeResolver::class,
+			MutatingScope::class,
 		], true)) {
 			return [];
 		}
