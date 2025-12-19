@@ -37,6 +37,7 @@ use function array_values;
 use function count;
 use function explode;
 use function get_loaded_extensions;
+use function getenv;
 use function implode;
 use function is_array;
 use function is_dir;
