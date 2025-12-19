@@ -1248,6 +1248,9 @@ class NodeScopeResolver
 			$this->processTraitUse($stmt, $scope, $traitStorage, $nodeCallback);
 			$this->processPendingFibers($traitStorage);
 		} elseif ($stmt instanceof Foreach_) {
+			if ($stmt->expr instanceof Variable && is_string($stmt->expr->name)) {
+				$scope = $this->processVarAnnotation($scope, [$stmt->expr->name], $stmt);
+			}
 			$condResult = $this->processExprNode($stmt, $stmt->expr, $scope, $storage, $nodeCallback, ExpressionContext::createDeep());
 			$throwPoints = $overridingThrowPoints ?? $condResult->getThrowPoints();
 			$impurePoints = $condResult->getImpurePoints();
@@ -1256,9 +1259,6 @@ class NodeScopeResolver
 				$stmt->expr,
 				new Array_([]),
 			);
-			if ($stmt->expr instanceof Variable && is_string($stmt->expr->name)) {
-				$scope = $this->processVarAnnotation($scope, [$stmt->expr->name], $stmt);
-			}
 			$this->callNodeCallback($nodeCallback, new InForeachNode($stmt), $scope, $storage);
 			$originalScope = $scope;
 			$bodyScope = $scope;
