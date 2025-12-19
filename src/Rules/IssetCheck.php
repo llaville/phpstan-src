@@ -123,7 +123,7 @@ final class IssetCheck
 
 		} elseif ($expr instanceof Node\Expr\PropertyFetch || $expr instanceof Node\Expr\StaticPropertyFetch) {
 
-			$propertyReflection = $this->propertyReflectionFinder->findPropertyReflectionFromNode($expr, $scope);
+			$propertyReflection = $this->propertyReflectionFinder->findPropertyReflectionFromNode($expr, $scope->toMutatingScope());
 
 			if ($propertyReflection === null) {
 				if ($expr instanceof Node\Expr\PropertyFetch) {
