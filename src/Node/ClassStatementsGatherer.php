@@ -32,6 +32,9 @@ final class ClassStatementsGatherer
 		'array_walk',
 	];
 
+	/** @var callable(Node $node, Scope $scope): void */
+	private $nodeCallback;
+
 	/** @var ClassPropertyNode[] */
 	private array $properties = [];
 
@@ -56,10 +59,15 @@ final class ClassStatementsGatherer
 	/** @var list<PropertyAssign> */
 	private array $propertyAssigns = [];
 
+	/**
+	 * @param callable(Node $node, Scope $scope): void $nodeCallback
+	 */
 	public function __construct(
 		private ClassReflection $classReflection,
+		callable $nodeCallback,
 	)
 	{
+		$this->nodeCallback = $nodeCallback;
 	}
 
 	/**
@@ -126,11 +134,9 @@ final class ClassStatementsGatherer
 		return $this->propertyAssigns;
 	}
 
-	/**
-	 * @param callable(Node $node, Scope $scope): void $nodeCallback
-	 */
-	public function __invoke(Node $node, Scope $scope, callable $nodeCallback): void
+	public function __invoke(Node $node, Scope $scope): void
 	{
+		$nodeCallback = $this->nodeCallback;
 		$nodeCallback($node, $scope);
 		$this->gatherNodes($node, $scope);
 	}
