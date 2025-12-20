@@ -214,7 +214,6 @@ use function array_slice;
 use function array_values;
 use function base64_decode;
 use function count;
-use function get_class;
 use function in_array;
 use function is_array;
 use function is_int;
