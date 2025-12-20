@@ -3888,7 +3888,10 @@ class NodeScopeResolver
 			}
 		} elseif ($expr instanceof List_) {
 			// only in assign and foreach, processed elsewhere
-			return new ExpressionResult($scope, $scope, false, false, [], []);
+			$result = new ExpressionResult($scope, $scope, false, false, [], []);
+			$this->storeBeforeScope($storage, $expr, $result);
+
+			return $result;
 		} elseif ($expr instanceof New_) {
 			$parametersAcceptor = null;
 			$constructorReflection = null;
