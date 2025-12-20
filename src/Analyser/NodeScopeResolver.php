@@ -2545,13 +2545,6 @@ class NodeScopeResolver
 		ExpressionContext $context,
 	): ExpressionResult
 	{
-		$existingBeforeScope = $storage->findBeforeScope($expr);
-		if ($existingBeforeScope !== null) {
-			if (!$nodeCallback instanceof ShallowNodeCallback) {
-				throw new ShouldNotHappenException(sprintf('Expr %s on line %d has already been analysed', get_class($expr), $expr->getStartLine()));
-			}
-		}
-
 		if ($expr instanceof Expr\CallLike && $expr->isFirstClassCallable()) {
 			if ($expr instanceof FuncCall) {
 				$newExpr = new FunctionCallableNode($expr->name, $expr);
