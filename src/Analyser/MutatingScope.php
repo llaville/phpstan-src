@@ -14,6 +14,7 @@ use PhpParser\Node\Expr\BinaryOp;
 use PhpParser\Node\Expr\Cast\Unset_;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Match_;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -2734,6 +2735,24 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 
 	public function getKeepVoidType(Expr $node): Type
 	{
+		if (
+			!$node instanceof Match_
+			&& (
+				(
+					!$node instanceof FuncCall
+					&& !$node instanceof MethodCall
+					&& !$node instanceof Expr\StaticCall
+				) || $node->isFirstClassCallable()
+			)
+		) {
+			return $this->getType($node);
+		}
+
+		$originalType = $this->getType($node);
+		if (!TypeCombinator::containsNull($originalType)) {
+			return $originalType;
+		}
+
 		$clonedNode = clone $node;
 		$clonedNode->setAttribute(self::KEEP_VOID_ATTRIBUTE_NAME, true);
 
