@@ -150,6 +150,9 @@ final class TypeCombinator
 			return new NeverType();
 		}
 
+		$alreadyNormalized = [];
+		$alreadyNormalizedCounter = 0;
+
 		$benevolentTypes = [];
 		$benevolentUnionObject = null;
 		// transform A | (B | C) to A | B | C
@@ -176,6 +179,8 @@ final class TypeCombinator
 			}
 
 			$typesInner = $types[$i]->getTypes();
+			$alreadyNormalized[$alreadyNormalizedCounter] = $typesInner;
+			$alreadyNormalizedCounter++;
 			array_splice($types, $i, 1, $typesInner);
 			$typesCount += count($typesInner) - 1;
 		}
@@ -302,6 +307,9 @@ final class TypeCombinator
 		// transform A | never to A
 		for ($i = 0; $i < $typesCount; $i++) {
 			for ($j = $i + 1; $j < $typesCount; $j++) {
+				if (self::isAlreadyNormalized($alreadyNormalized, $types[$i], $types[$j])) {
+					continue;
+				}
 				$compareResult = self::compareTypesInUnion($types[$i], $types[$j]);
 				if ($compareResult === null) {
 					continue;
@@ -386,6 +394,31 @@ final class TypeCombinator
 		}
 
 		return new UnionType($types, true);
+	}
+
+	/**
+	 * @param array<int, Type[]> $alreadyNormalized
+	 */
+	private static function isAlreadyNormalized(array $alreadyNormalized, Type $a, Type $b): bool
+	{
+		foreach ($alreadyNormalized as $normalizedTypes) {
+			foreach ($normalizedTypes as $i => $normalizedType) {
+				if ($normalizedType !== $a) {
+					continue;
+				}
+
+				foreach ($normalizedTypes as $j => $anotherNormalizedType) {
+					if ($i === $j) {
+						continue;
+					}
+					if ($anotherNormalizedType === $b) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
