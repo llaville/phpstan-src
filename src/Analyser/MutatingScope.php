@@ -2501,16 +2501,13 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 
 	private function getDynamicFunctionReturnType(FuncCall $normalizedNode, FunctionReflection $functionReflection): ?Type
 	{
-		foreach ($this->dynamicReturnTypeExtensionRegistry->getDynamicFunctionReturnTypeExtensions() as $dynamicFunctionReturnTypeExtension) {
-			if (!$dynamicFunctionReturnTypeExtension->isFunctionSupported($functionReflection)) {
-				continue;
-			}
-
+		foreach ($this->dynamicReturnTypeExtensionRegistry->getDynamicFunctionReturnTypeExtensions($functionReflection) as $dynamicFunctionReturnTypeExtension) {
 			$resolvedType = $dynamicFunctionReturnTypeExtension->getTypeFromFunctionCall(
 				$functionReflection,
 				$normalizedNode,
 				$this,
 			);
+
 			if ($resolvedType !== null) {
 				return $resolvedType;
 			}
