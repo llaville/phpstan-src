@@ -2922,12 +2922,12 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 	/**
 	 * @param MethodReflection|FunctionReflection|null $reflection
 	 */
-	public function pushInFunctionCall($reflection, ?ParameterReflection $parameter): self
+	public function pushInFunctionCall($reflection, ?ParameterReflection $parameter, bool $rememberTypes): self
 	{
 		$stack = $this->inFunctionCallsStack;
 		$stack[] = [$reflection, $parameter];
 
-		return $this->scopeFactory->create(
+		$functionScope = $this->scopeFactory->create(
 			$this->context,
 			$this->isDeclareStrictTypes(),
 			$this->getFunction(),
@@ -2945,6 +2945,12 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 			$this->parentScope,
 			$this->nativeTypesPromoted,
 		);
+
+		if ($rememberTypes) {
+			$functionScope->resolvedTypes = $this->resolvedTypes;
+		}
+
+		return $functionScope;
 	}
 
 	public function popInFunctionCall(): self
@@ -2952,7 +2958,7 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 		$stack = $this->inFunctionCallsStack;
 		array_pop($stack);
 
-		return $this->scopeFactory->create(
+		$parentScope = $this->scopeFactory->create(
 			$this->context,
 			$this->isDeclareStrictTypes(),
 			$this->getFunction(),
@@ -2970,6 +2976,10 @@ class MutatingScope implements Scope, NodeCallbackInvoker
 			$this->parentScope,
 			$this->nativeTypesPromoted,
 		);
+
+		$parentScope->resolvedTypes = $this->resolvedTypes;
+
+		return $parentScope;
 	}
 
 	/** @api */
