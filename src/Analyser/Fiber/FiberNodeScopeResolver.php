@@ -31,6 +31,10 @@ final class FiberNodeScopeResolver extends NodeScopeResolver
 		ExpressionResultStorage $storage,
 	): void
 	{
+		if (Fiber::getCurrent() !== null) {
+			$nodeCallback($node, $scope->toFiberScope());
+			return;
+		}
 		$fiber = new Fiber(static function () use ($node, $scope, $nodeCallback) {
 			$nodeCallback($node, $scope->toFiberScope());
 		});
