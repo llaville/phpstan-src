@@ -4378,6 +4378,7 @@ class NodeScopeResolver
 			$impurePoints = $result->getImpurePoints();
 			$isAlwaysTerminating = $result->isAlwaysTerminating();
 			$scope = $result->getScope();
+			$this->storeBeforeScope($storage, $expr, $result);
 
 			$expr = $expr->getExpr();
 		} elseif ($expr instanceof Expr\Throw_) {
